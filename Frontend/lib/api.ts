@@ -312,22 +312,19 @@ export interface DashboardStats {
   orders: {
     totalOrders: number;
     pendingOrders: number;
-    processingOrders: number;
-    shippedOrders: number;
-    deliveredOrders: number;
+    completedOrders: number;
+    cancelledOrders: number;
   };
   customers: {
     totalCustomers: number;
     activeCustomers: number;
-    newCustomers: number;
-    vipCustomers: number;
+    inactiveCustomers: number;
   };
   products: {
     totalProducts: number;
     activeProducts: number;
     inactiveProducts: number;
     unavailableProducts: number;
-    lowStockProducts?: number;
   };
   tracking: {
     totalTrackings: number;
@@ -335,6 +332,33 @@ export interface DashboardStats {
     delivered: number;
     pending: number;
   };
+}
+
+export interface RecentOrder {
+  id: number;
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string;
+  total: number;
+  status: string;
+  orderDate: string;
+  itemCount: number;
+}
+
+export interface DeliveryPerformance {
+  averageDeliveryTime: number;
+  delayedOrdersCount: number;
+}
+
+export interface InventoryAlerts {
+  unavailableProducts: number;
+  totalProducts: number;
+}
+
+export interface DashboardAlerts {
+  unavailableProductsCount: number;
+  pendingOrdersCount: number;
+  delayedDeliveriesCount: number;
 }
 
 export interface AuthResponse {
@@ -1231,28 +1255,28 @@ export const dashboardApi = {
     return handleResponse<DashboardStats>(response);
   },
 
-  getRecentOrders: async (limit = 10) => {
+  getRecentOrders: async (limit = 10): Promise<{ orders: RecentOrder[]; count: number }> => {
     const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/recent-orders?limit=${limit}`, {
       headers: getAuthHeaders(),
     });
     return handleResponse(response);
   },
 
-  getDeliveryPerformance: async (): Promise<{ averageDeliveryTime: number; delayedOrdersCount: number }> => {
+  getDeliveryPerformance: async (): Promise<DeliveryPerformance> => {
     const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/delivery-performance`, {
       headers: getAuthHeaders(),
     });
     return handleResponse(response);
   },
 
-  getInventoryAlerts: async (): Promise<{ lowStockProducts: number; totalProducts: number }> => {
+  getInventoryAlerts: async (): Promise<InventoryAlerts> => {
     const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/inventory-alerts`, {
       headers: getAuthHeaders(),
     });
     return handleResponse(response);
   },
 
-  getAlerts: async (): Promise<{ lowStockCount: number; pendingOrdersCount: number; delayedDeliveriesCount: number }> => {
+  getAlerts: async (): Promise<DashboardAlerts> => {
     const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/alerts`, {
       headers: getAuthHeaders(),
     });

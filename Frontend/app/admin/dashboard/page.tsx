@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -19,6 +17,8 @@ import {
   Users,
   Package,
   FolderTree,
+  Truck,
+  Clock,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -35,12 +35,15 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/lib/auth-context"
 import { AdminSidebar } from "@/components/admin-sidebar"
-import { dashboardApi, type DashboardStats } from "@/lib/api"
+import { dashboardApi, type DashboardStats, type RecentOrder, type DeliveryPerformance, type DashboardAlerts } from "@/lib/api"
 
 export default function AdminDashboardPage() {
   const router = useRouter()
   const { user, logout, isAuthenticated, isLoading: authLoading } = useAuth()
   const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
+  const [deliveryPerformance, setDeliveryPerformance] = useState<DeliveryPerformance | null>(null)
+  const [alerts, setAlerts] = useState<DashboardAlerts | null>(null)
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -52,33 +55,42 @@ export default function AdminDashboardPage() {
       return
     }
 
-    const fetchStats = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const data = await dashboardApi.getStats()
-        setStats(data)
+        setLoading(true)
+        
+        // Fetch all dashboard data in parallel
+        const [statsData, ordersData, performanceData, alertsData] = await Promise.all([
+          dashboardApi.getStats(),
+          dashboardApi.getRecentOrders(10),
+          dashboardApi.getDeliveryPerformance(),
+          dashboardApi.getAlerts(),
+        ])
+
+        setStats(statsData)
+        setRecentOrders(ordersData.orders)
+        setDeliveryPerformance(performanceData)
+        setAlerts(alertsData)
       } catch (error) {
-        console.error("Failed to fetch stats:", error)
-        // Demo data
+        console.error("Failed to fetch dashboard data:", error)
+        // Set demo data on error for development
         setStats({
           orders: {
             totalOrders: 156,
             pendingOrders: 12,
-            processingOrders: 24,
-            shippedOrders: 45,
-            deliveredOrders: 75,
+            completedOrders: 135,
+            cancelledOrders: 9,
           },
           customers: {
             totalCustomers: 89,
             activeCustomers: 67,
-            newCustomers: 15,
-            vipCustomers: 7,
+            inactiveCustomers: 22,
           },
           products: {
             totalProducts: 24,
             activeProducts: 20,
             inactiveProducts: 2,
-            unavailableProducts: 0,
-            lowStockProducts: 3,
+            unavailableProducts: 2,
           },
           tracking: {
             totalTrackings: 234,
@@ -87,12 +99,21 @@ export default function AdminDashboardPage() {
             pending: 9,
           },
         })
+        setDeliveryPerformance({
+          averageDeliveryTime: 28.5,
+          delayedOrdersCount: 3,
+        })
+        setAlerts({
+          unavailableProductsCount: 2,
+          pendingOrdersCount: 12,
+          delayedDeliveriesCount: 3,
+        })
       } finally {
         setLoading(false)
       }
     }
 
-    fetchStats()
+    fetchDashboardData()
   }, [authLoading, router])
 
   const handleLogout = () => {
@@ -105,15 +126,15 @@ export default function AdminDashboardPage() {
         {
           title: "Total Orders",
           value: stats.orders.totalOrders,
-          change: "+12.5%",
-          trend: "up",
+          change: `${stats.orders.pendingOrders} pending`,
+          trend: stats.orders.pendingOrders > 0 ? "down" : "up",
           icon: ShoppingCart,
           color: "#556B2F",
         },
         {
-          title: "Total Revenue",
-          value: "24,560 MAD",
-          change: "+8.2%",
+          title: "Completed Orders",
+          value: stats.orders.completedOrders,
+          change: `${stats.orders.cancelledOrders} cancelled`,
           trend: "up",
           icon: TrendingUp,
           color: "#D6A64F",
@@ -121,7 +142,7 @@ export default function AdminDashboardPage() {
         {
           title: "Active Customers",
           value: stats.customers.activeCustomers,
-          change: "+5.3%",
+          change: `${stats.customers.totalCustomers} total`,
           trend: "up",
           icon: Users,
           color: "#556B2F",
@@ -129,9 +150,8 @@ export default function AdminDashboardPage() {
         {
           title: "Products",
           value: stats.products.totalProducts,
-          // lowStockProducts is optional on the type, coalesce to 0 for calculations
-          change: (stats.products.lowStockProducts ?? 0) > 0 ? `${stats.products.lowStockProducts} low stock` : "All good",
-          trend: (stats.products.lowStockProducts ?? 0) > 0 ? "down" : "up",
+          change: stats.products.unavailableProducts > 0 ? `${stats.products.unavailableProducts} unavailable` : "All available",
+          trend: stats.products.unavailableProducts > 0 ? "down" : "up",
           icon: Package,
           color: "#D6A64F",
         },
@@ -285,13 +305,13 @@ export default function AdminDashboardPage() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {(stats?.products.lowStockProducts ?? 0) > 0 && (
+                    {alerts && alerts.unavailableProductsCount > 0 && (
                       <div className="flex items-start gap-3 p-4 rounded-xl bg-orange-50 border border-orange-200">
                         <Package className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
                         <div className="flex-1">
-                          <p className="font-medium text-orange-800">Low Stock Alert</p>
+                          <p className="font-medium text-orange-800">Unavailable Products</p>
                           <p className="text-sm text-orange-600">
-                            {stats?.products.lowStockProducts} products are running low on stock  
+                            {alerts.unavailableProductsCount} products are unavailable
                           </p>
                         </div>
                         <Link href="/admin/products">
@@ -301,13 +321,13 @@ export default function AdminDashboardPage() {
                         </Link>
                       </div>
                     )}
-                    {stats?.orders.pendingOrders && stats.orders.pendingOrders > 0 && (
+                    {alerts && alerts.pendingOrdersCount > 0 && (
                       <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
                         <ShoppingCart className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
                         <div className="flex-1">
                           <p className="font-medium text-blue-800">Pending Orders</p>
                           <p className="text-sm text-blue-600">
-                            {stats.orders.pendingOrders} orders waiting to be processed
+                            {alerts.pendingOrdersCount} orders waiting to be processed
                           </p>
                         </div>
                         <Link href="/admin/orders">
@@ -317,20 +337,25 @@ export default function AdminDashboardPage() {
                         </Link>
                       </div>
                     )}
-                    {stats?.customers.newCustomers && stats.customers.newCustomers > 0 && (
-                      <div className="flex items-start gap-3 p-4 rounded-xl bg-[#556B2F]/5 border border-[#556B2F]/20">
-                        <Users className="w-5 h-5 text-[#556B2F] flex-shrink-0 mt-0.5" />
+                    {alerts && alerts.delayedDeliveriesCount > 0 && (
+                      <div className="flex items-start gap-3 p-4 rounded-xl bg-red-50 border border-red-200">
+                        <Truck className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                         <div className="flex-1">
-                          <p className="font-medium text-[#556B2F]">New Customers</p>
-                          <p className="text-sm text-[#556B2F]/70">
-                            {stats.customers.newCustomers} new customers this month
+                          <p className="font-medium text-red-800">Delayed Deliveries</p>
+                          <p className="text-sm text-red-600">
+                            {alerts.delayedDeliveriesCount} orders have delayed tracking
                           </p>
                         </div>
-                        <Link href="/admin/customers">
-                          <Button size="sm" variant="outline" className="border-[#556B2F]/30">
+                        <Link href="/admin/orders">
+                          <Button size="sm" variant="outline" className="border-red-300">
                             View
                           </Button>
                         </Link>
+                      </div>
+                    )}
+                    {(!alerts || (alerts.unavailableProductsCount === 0 && alerts.pendingOrdersCount === 0 && alerts.delayedDeliveriesCount === 0)) && (
+                      <div className="flex items-center justify-center py-8 text-muted-foreground">
+                        <p>No alerts at the moment</p>
                       </div>
                     )}
                   </div>
@@ -368,37 +393,164 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Order Status Overview */}
+          <div className="grid lg:grid-cols-2 gap-6">
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="font-serif">Order Status Overview</CardTitle>
+                <CardDescription>Current status distribution</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    {Array(4)
+                      .fill(0)
+                      .map((_, i) => (
+                        <Skeleton key={i} className="h-24 w-full" />
+                      ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      { label: "Pending", value: stats?.orders.pendingOrders || 0, color: "bg-yellow-500" },
+                      { label: "Completed", value: stats?.orders.completedOrders || 0, color: "bg-[#556B2F]" },
+                      { label: "Cancelled", value: stats?.orders.cancelledOrders || 0, color: "bg-red-500" },
+                      { label: "Total", value: stats?.orders.totalOrders || 0, color: "bg-blue-500" },
+                    ].map((status) => (
+                      <div
+                        key={status.label}
+                        className="p-4 rounded-xl bg-muted/50 text-center"
+                      >
+                        <div className={`w-3 h-3 ${status.color} rounded-full mx-auto mb-2`} />
+                        <p className="text-2xl font-serif font-bold">{status.value}</p>
+                        <p className="text-sm text-muted-foreground">{status.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Delivery Performance */}
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="font-serif">Delivery Performance</CardTitle>
+                <CardDescription>Tracking metrics</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="space-y-4">
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-[#556B2F]/5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-[#556B2F]/10 flex items-center justify-center">
+                          <Clock className="w-5 h-5 text-[#556B2F]" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Avg. Delivery Time</p>
+                          <p className="text-2xl font-bold">{deliveryPerformance?.averageDeliveryTime.toFixed(1) || 0}h</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-orange-50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                          <AlertCircle className="w-5 h-5 text-orange-500" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Delayed Orders</p>
+                          <p className="text-2xl font-bold">{deliveryPerformance?.delayedOrdersCount || 0}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="p-2 rounded-lg bg-muted/50">
+                        <p className="text-xs text-muted-foreground">In Transit</p>
+                        <p className="text-lg font-bold">{stats?.tracking.inTransit || 0}</p>
+                      </div>
+                      <div className="p-2 rounded-lg bg-muted/50">
+                        <p className="text-xs text-muted-foreground">Delivered</p>
+                        <p className="text-lg font-bold">{stats?.tracking.delivered || 0}</p>
+                      </div>
+                      <div className="p-2 rounded-lg bg-muted/50">
+                        <p className="text-xs text-muted-foreground">Pending</p>
+                        <p className="text-lg font-bold">{stats?.tracking.pending || 0}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent Orders */}
           <Card className="glass-card">
             <CardHeader>
-              <CardTitle className="font-serif">Order Status Overview</CardTitle>
-              <CardDescription>Current status of all orders</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="font-serif">Recent Orders</CardTitle>
+                  <CardDescription>Latest orders from customers</CardDescription>
+                </div>
+                <Link href="/admin/orders">
+                  <Button variant="outline" size="sm">
+                    View All
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </Link>
+              </div>
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {Array(4)
+                <div className="space-y-3">
+                  {Array(5)
                     .fill(0)
                     .map((_, i) => (
-                      <Skeleton key={i} className="h-24 w-full" />
+                      <Skeleton key={i} className="h-16 w-full" />
                     ))}
                 </div>
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {[
-                    { label: "Pending", value: stats?.orders.pendingOrders || 0, color: "bg-yellow-500" },
-                    { label: "Processing", value: stats?.orders.processingOrders || 0, color: "bg-blue-500" },
-                    { label: "Shipped", value: stats?.orders.shippedOrders || 0, color: "bg-purple-500" },
-                    { label: "Delivered", value: stats?.orders.deliveredOrders || 0, color: "bg-[#556B2F]" },
-                  ].map((status) => (
-                    <div
-                      key={status.label}
-                      className="p-4 rounded-xl bg-muted/50 text-center"
+              ) : recentOrders.length > 0 ? (
+                <div className="space-y-2">
+                  {recentOrders.map((order) => (
+                    <Link
+                      key={order.id}
+                      href={`/admin/orders/${order.id}`}
+                      className="flex items-center justify-between p-4 rounded-xl hover:bg-muted/50 transition-colors"
                     >
-                      <div className={`w-3 h-3 ${status.color} rounded-full mx-auto mb-2`} />
-                      <p className="text-2xl font-serif font-bold">{status.value}</p>
-                      <p className="text-sm text-muted-foreground">{status.label}</p>
-                    </div>
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-lg bg-[#556B2F]/10 flex items-center justify-center">
+                          <ShoppingCart className="w-5 h-5 text-[#556B2F]" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{order.orderNumber}</p>
+                          <p className="text-sm text-muted-foreground">{order.customerName}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="font-semibold">{order.total.toFixed(2)} MAD</p>
+                          <p className="text-xs text-muted-foreground">{order.itemCount} items</p>
+                        </div>
+                        <Badge
+                          variant={
+                            order.status === "COMPLETED"
+                              ? "default"
+                              : order.status === "PENDING"
+                              ? "secondary"
+                              : "outline"
+                          }
+                        >
+                          {order.status}
+                        </Badge>
+                      </div>
+                    </Link>
                   ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-8 text-muted-foreground">
+                  <p>No recent orders</p>
                 </div>
               )}
             </CardContent>
