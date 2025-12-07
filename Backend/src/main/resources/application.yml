@@ -1,14 +1,17 @@
 spring:
   application:
-    name: barakahStore
+    name: silea
   datasource:
-    url: jdbc:mysql://localhost:3306/barakahdb
+    # Fixed JDBC URL: include query parameters with ? and proper param name
+    # Using utf8mb4 for full UTF-8 support including emojis and all Unicode characters
+    url: 'jdbc:mysql://localhost:3306/sileadb?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci'
     username: root
     password: 
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      # Use create-drop to force database recreation and re-seed data
+      ddl-auto: create-drop
     show-sql: true
     properties:
       hibernate:
@@ -18,9 +21,26 @@ spring:
   jackson:
     serialization:
       fail-on-empty-beans: false
+    default-property-inclusion: non_null
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+      force-request: true
+      force-response: true
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
   sql:
     init:
-      mode: never
+      mode: always
+
+# File upload configuration
+file:
+  upload-dir: uploads/images
 
 logging:
   level:

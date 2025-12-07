@@ -1,0 +1,22 @@
+{
+  "customerName": "Test Customer",
+  "customerEmail": "test@example.com",
+  "customerPhone": "+212600000999",
+  "shippingAddress": "123 Test Street, Casablanca",
+  "notes": "Test order with weight specification",
+  "estimatedDeliveryDate": "2025-12-10T15:00:00",
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 1,
+      "weight": "0.5kg",
+      "unitPrice": 45.00
+    },
+    {
+      "productId": 2,
+      "quantity": 2,
+      "weight": "1kg",
+      "unitPrice": 35.00
+    }
+  ]
+}

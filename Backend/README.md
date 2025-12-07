@@ -1,6 +1,6 @@
-# Barakah Store Backend API
+# silea Store Backend API
 
-A comprehensive REST API for the Moroccan e-commerce platform Barakah Store, built with Spring Boot 3.5.6.
+A comprehensive REST API for the Moroccan e-commerce platform silea Store, built with Spring Boot 3.5.6.
 
 ## Features
 
@@ -31,7 +31,7 @@ A comprehensive REST API for the Moroccan e-commerce platform Barakah Store, bui
 
 ### Database Setup
 
-1. Create a MySQL database named `barakahdb`
+1. Create a MySQL database named `sileadb`
 2. Update `src/main/resources/application.yml` with your database credentials
 3. The application will automatically create tables and populate initial data from `data.sql`
 
@@ -120,7 +120,7 @@ http://localhost:8080/v3/api-docs
 
 The application includes comprehensive sample data:
 
-- **1 Admin User**: admin@barakahstore.ma / password (encrypted)
+- **1 Admin User**: admin@silea.ma / password (encrypted)
 - **6 Product Categories**: Oils, Honey, Spices, Dried Fruits, Teas, Natural Cosmetics
 - **18 Products**: Moroccan traditional products with bilingual descriptions
 - **5 Sample Customers**: From different Moroccan cities
@@ -149,13 +149,13 @@ The application uses the following main entities:
 
 ### Project Structure
 ```
-src/main/java/com/example/barakahstore/
+src/main/java/com/example/silea/
 ├── controller/     # REST controllers
 ├── entity/         # JPA entities
 ├── enums/          # Enumeration classes
 ├── repository/     # Data access layer
 ├── service/        # Business logic layer
-└── BarakahStoreApplication.java
+└── sileaApplication.java
 
 src/main/resources/
 ├── application.yml # Configuration
@@ -166,7 +166,7 @@ src/main/resources/
 
 ```bash
 mvn clean package
-java -jar target/barakahStore-0.0.1-SNAPSHOT.jar
+java -jar target/silea-0.0.1-SNAPSHOT.jar
 ```
 
 ## Contributing
@@ -183,4 +183,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Support
 
-For support, email support@barakahstore.ma or create an issue in the repository.
+For support, email support@silea.ma or create an issue in the repository.

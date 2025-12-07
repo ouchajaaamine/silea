@@ -2,7 +2,7 @@
 
 ## How to Test Protected Endpoints with JWT Token
 
-The Barakah Store API now supports JWT authentication testing directly in Swagger UI. Here's how to use it:
+The silea Store API now supports JWT authentication testing directly in Swagger UI. Here's how to use it:
 
 ### Step 1: Login to Get JWT Token
 
@@ -13,7 +13,7 @@ The Barakah Store API now supports JWT authentication testing directly in Swagge
 5. Enter the admin credentials:
    ```json
    {
-     "email": "admin@barakahstore.ma",
+     "email": "admin@silea.ma",
      "password": "admin123"
    }
    ```
@@ -79,7 +79,7 @@ Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBiYXJha2Foc3RvcmUu
 
 ### Admin Credentials
 
-- **Email:** `admin@barakahstore.ma`
+- **Email:** `admin@silea.ma`
 - **Password:** `admin123`
 
 ---
@@ -97,7 +97,7 @@ Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBiYXJha2Foc3RvcmUu
 - **Request Body:**
   ```json
   {
-    "email": "admin@barakahstore.ma",
+    "email": "admin@silea.ma",
     "password": "admin123"
   }
   ```
@@ -110,7 +110,7 @@ Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBiYXJha2Foc3RvcmUu
       "token": "YOUR_JWT_TOKEN_HERE",
       "user": {
         "id": 1,
-        "email": "admin@barakahstore.ma",
+        "email": "admin@silea.ma",
         "name": "Admin User"
       }
     }

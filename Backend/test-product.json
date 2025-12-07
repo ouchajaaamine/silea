@@ -1,0 +1,9 @@
+{
+  "name": "Test Product",
+  "nameArabic": "منتج اختبار",
+  "description": "Test description for product creation",
+  "price": 9.99,
+  "available": true,
+  "categoryId": 1,
+  "imageUrl": "http://example.com/img.jpg"
+}
