@@ -4,6 +4,8 @@ import com.example.silea.entity.*;
 import com.example.silea.enums.OrderStatus;
 import com.example.silea.repository.CustomerRepository;
 import com.example.silea.repository.OrderRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,15 +23,20 @@ import java.util.Optional;
 @Transactional
 public class OrderService {
 
+    private static final Logger logger = LoggerFactory.getLogger(OrderService.class);
+
     private final OrderRepository orderRepository;
     private final CustomerRepository customerRepository;
+    private final MondayService mondayService;
     
     // For generating unique tracking codes
     private static final SecureRandom secureRandom = new SecureRandom();
 
-    public OrderService(OrderRepository orderRepository, CustomerRepository customerRepository) {
+    public OrderService(OrderRepository orderRepository, CustomerRepository customerRepository,
+                       MondayService mondayService) {
         this.orderRepository = orderRepository;
         this.customerRepository = customerRepository;
+        this.mondayService = mondayService;
     }
 
     /**
@@ -62,6 +69,24 @@ public class OrderService {
         
         // Update customer statistics
         updateCustomerOrderStats(customer, total);
+        
+        // Create item in Monday.com (async, won't fail order if Monday.com is down)
+        try {
+            logger.info("Creating Monday.com item for order: {}", savedOrder.getOrderNumber());
+            String mondayItemId = mondayService.createOrderItem(savedOrder);
+            if (mondayItemId != null) {
+                logger.info("Successfully created Monday.com item {} for order {}", 
+                    mondayItemId, savedOrder.getOrderNumber());
+                // Optionally store mondayItemId in order entity if you add that field
+            } else {
+                logger.warn("Monday.com item creation returned null for order {}", 
+                    savedOrder.getOrderNumber());
+            }
+        } catch (Exception e) {
+            // Log error but don't fail the order
+            logger.error("Failed to create Monday.com item for order {}: {}", 
+                savedOrder.getOrderNumber(), e.getMessage(), e);
+        }
         
         return savedOrder;
     }

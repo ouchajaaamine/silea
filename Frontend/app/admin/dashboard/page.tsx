@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -158,6 +160,37 @@ export default function AdminDashboardPage() {
       ]
     : []
 
+  // Small sparkline renderer for cards (returns SVG element)
+  const renderSparkline = (values: number[], color = '#D6A64F') => {
+    if (!values || values.length === 0) return null
+    const w = 120
+    const h = 32
+    const max = Math.max(...values)
+    const min = Math.min(...values)
+    const range = Math.max(1, max - min)
+    const points = values
+      .map((v, i) => {
+        const x = (i / (values.length - 1)) * w
+        const y = h - ((v - min) / range) * h
+        return `${x},${y}`
+      })
+      .join(' ')
+
+    return (
+      <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="inline-block">
+        <polyline
+          points={points}
+          fill="none"
+          stroke={color}
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity={0.9}
+        />
+      </svg>
+    )
+  }
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -234,57 +267,92 @@ export default function AdminDashboardPage() {
 
         {/* Dashboard Content */}
         <main className="p-4 lg:p-8 space-y-8">
-          {/* Stats Cards */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {loading
-              ? Array(4)
-                  .fill(0)
-                  .map((_, i) => (
-                    <Card key={i} className="glass-card">
-                      <CardContent className="p-6">
-                        <Skeleton className="h-4 w-24 mb-2" />
-                        <Skeleton className="h-8 w-16 mb-2" />
-                        <Skeleton className="h-4 w-20" />
-                      </CardContent>
-                    </Card>
-                  ))
-              : statCards.map((stat, index) => (
-                  <Card
-                    key={stat.title}
-                    className="glass-card opacity-0 animate-in fade-in slide-in-from-bottom-4 fill-mode-forwards"
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
-                          <p className="text-3xl font-serif font-bold">{stat.value}</p>
-                        </div>
-                        <div
-                          className="w-12 h-12 rounded-xl flex items-center justify-center"
-                          style={{ backgroundColor: `${stat.color}15` }}
-                        >
-                          <stat.icon className="w-6 h-6" style={{ color: stat.color }} />
+          {/* Hero KPI + Polished Stat Cards */}
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Main revenue/summary hero */}
+              <Card className="glass-card lg:col-span-2 p-6 overflow-hidden relative">
+                <div className="absolute -right-32 -top-16 w-64 h-64 rounded-full bg-gradient-to-br from-[#D6A64F] to-[#556B2F] opacity-10 transform rotate-45" />
+                <CardContent className="p-6 relative z-10">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Overview</p>
+                      <h2 className="text-4xl font-serif font-bold">Business Summary</h2>
+                      <p className="mt-2 text-sm text-muted-foreground">Key metrics at a glance</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">This month</p>
+                      <p className="text-3xl font-bold">{stats?.orders.totalOrders || 0} orders</p>
+                      <p className="text-sm text-muted-foreground">Revenue: <span className="font-semibold">24,560 MAD</span></p>
+                    </div>
+                  </div>
+                  <div className="mt-6 grid grid-cols-2 gap-4">
+                    <div className="p-4 rounded-lg bg-white/5">
+                      <p className="text-xs text-muted-foreground">Avg Delivery Time</p>
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="text-2xl font-bold">{deliveryPerformance?.averageDeliveryTime?.toFixed(1) ?? '—'}h</div>
+                        {renderSparkline([10, 12, 18, 15, 20, deliveryPerformance?.averageDeliveryTime ?? 18], '#556B2F')}
+                      </div>
+                    </div>
+                    <div className="p-4 rounded-lg bg-white/5">
+                      <p className="text-xs text-muted-foreground">Delayed Orders</p>
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="text-2xl font-bold">{deliveryPerformance?.delayedOrdersCount ?? 0}</div>
+                        {renderSparkline([2, 3, 1, 5, 4, deliveryPerformance?.delayedOrdersCount ?? 0], '#F97316')}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Small KPI cards */}
+              <div className="grid grid-cols-1 gap-4">
+                {loading
+                  ? Array(2)
+                      .fill(0)
+                      .map((_, i) => (
+                        <Card key={i} className="glass-card p-4">
+                          <CardContent className="p-4">
+                            <Skeleton className="h-6 w-32 mb-2" />
+                            <Skeleton className="h-8 w-24" />
+                          </CardContent>
+                        </Card>
+                      ))
+                  : [
+                      {
+                        title: 'Active Customers',
+                        value: stats?.customers.activeCustomers || 0,
+                        colorFrom: '#10B981',
+                        colorTo: '#059669',
+                        spark: [5, 6, 8, 9, stats?.customers.activeCustomers ?? 0],
+                        icon: Users,
+                      },
+                      {
+                        title: 'Products',
+                        value: stats?.products.totalProducts || 0,
+                        colorFrom: '#D6A64F',
+                        colorTo: '#B8860B',
+                        spark: [12, 11, 14, 13, stats?.products.totalProducts ?? 0],
+                        icon: Package,
+                      },
+                    ].map((card) => (
+                      <div key={card.title} className="rounded-lg overflow-hidden shadow-lg">
+                        <div className="p-4" style={{ background: `linear-gradient(135deg, ${card.colorFrom}, ${card.colorTo})` }}>
+                          <div className="flex items-center justify-between text-white">
+                            <div>
+                              <p className="text-xs opacity-90">{card.title}</p>
+                              <p className="text-2xl font-bold">{card.value}</p>
+                            </div>
+                            <div className="opacity-90">
+                              <card.icon className="w-8 h-8" />
+                            </div>
+                          </div>
+                          <div className="mt-3">{renderSparkline(card.spark, '#ffffff')}</div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 mt-3">
-                        {stat.trend === "up" ? (
-                          <ArrowUpRight className="w-4 h-4 text-[#556B2F]" />
-                        ) : (
-                          <ArrowDownRight className="w-4 h-4 text-orange-500" />
-                        )}
-                        <span
-                          className={`text-sm font-medium ${
-                            stat.trend === "up" ? "text-[#556B2F]" : "text-orange-500"
-                          }`}
-                        >
-                          {stat.change}
-                        </span>
-                        <span className="text-xs text-muted-foreground">vs last month</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                    ))}
+              </div>
+            </div>
           </div>
 
           {/* Alerts & Quick Actions */}

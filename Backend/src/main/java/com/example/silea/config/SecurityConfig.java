@@ -76,6 +76,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/tracking/order/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/tracking/track/**").permitAll()
                 
+                // Webhooks - public endpoints for external services (Monday.com, etc.)
+                .requestMatchers("/api/webhooks/**").permitAll()
+                
                 // Cart - all public
                 .requestMatchers("/api/cart/**").permitAll()
                 
