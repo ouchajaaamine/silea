@@ -78,6 +78,9 @@ public class SecurityConfig {
                 
                 // Webhooks - public endpoints for external services (Monday.com, etc.)
                 .requestMatchers("/api/webhooks/**").permitAll()
+
+                // Monday manual sync endpoints (used to push orders to Monday.com)
+                .requestMatchers("/api/monday-sync/**").permitAll()
                 
                 // Cart - all public
                 .requestMatchers("/api/cart/**").permitAll()

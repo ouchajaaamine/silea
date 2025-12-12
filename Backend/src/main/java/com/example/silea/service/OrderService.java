@@ -28,15 +28,17 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final CustomerRepository customerRepository;
     private final MondayService mondayService;
+    private final WhatsAppService whatsAppService;
     
     // For generating unique tracking codes
     private static final SecureRandom secureRandom = new SecureRandom();
 
     public OrderService(OrderRepository orderRepository, CustomerRepository customerRepository,
-                       MondayService mondayService) {
+                       MondayService mondayService, WhatsAppService whatsAppService) {
         this.orderRepository = orderRepository;
         this.customerRepository = customerRepository;
         this.mondayService = mondayService;
+        this.whatsAppService = whatsAppService;
     }
 
     /**
@@ -86,6 +88,15 @@ public class OrderService {
             // Log error but don't fail the order
             logger.error("Failed to create Monday.com item for order {}: {}", 
                 savedOrder.getOrderNumber(), e.getMessage(), e);
+        }
+        
+        // Send WhatsApp confirmation (async, won't fail order if WhatsApp is down)
+        try {
+            logger.info("Sending WhatsApp confirmation for order: {}", savedOrder.getOrderNumber());
+            whatsAppService.sendOrderConfirmation(savedOrder);
+        } catch (Exception e) {
+            logger.error("Failed to send WhatsApp confirmation for order {}: {}", 
+                savedOrder.getOrderNumber(), e.getMessage());
         }
         
         return savedOrder;

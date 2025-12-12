@@ -519,7 +519,7 @@ export default function AdminDashboardPage() {
                         </div>
                         <div>
                           <p className="text-sm text-muted-foreground">Avg. Delivery Time</p>
-                          <p className="text-2xl font-bold">{deliveryPerformance?.averageDeliveryTime.toFixed(1) || 0}h</p>
+                          <p className="text-2xl font-bold">{deliveryPerformance?.averageDeliveryTime?.toFixed(1) || '0'}h</p>
                         </div>
                       </div>
                     </div>

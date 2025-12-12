@@ -11,6 +11,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -118,16 +119,23 @@ public class MondayService {
         String shippingAddress = escapeGraphQL(order.getShippingAddress());
         String itemsListEscaped = escapeGraphQL(itemsList);
 
-        // Build column values JSON (adjust column IDs based on your Monday.com board structure)
+        // Build column values JSON with exact Monday.com board column IDs
         Map<String, Object> columnValues = new HashMap<>();
-        columnValues.put("text", order.getOrderNumber()); // Order Number column
-        columnValues.put("text4", customerName); // Customer Name column
-        columnValues.put("email", Map.of("email", customerEmail, "text", customerEmail)); // Email column
-        columnValues.put("phone", customerPhone); // Phone column
-        columnValues.put("long_text", itemsListEscaped); // Items column
-        columnValues.put("numbers", order.getTotal()); // Total column
-        columnValues.put("status", mapOrderStatus(order.getStatus())); // Status column
-        columnValues.put("text9", shippingAddress); // Address column
+        columnValues.put("text_mkygd7rx", order.getOrderNumber()); // Numéro de Commande
+        columnValues.put("text_mkygp4fs", customerName); // Nom du Client
+        // Email column doesn't need special format for text-based email column
+        // If your email column expects email object, uncomment the next line and remove the one after
+        // columnValues.put("email", Map.of("email", customerEmail, "text", customerEmail)); 
+        // For now, treating as text since no email type column ID was provided
+        columnValues.put("phone_mkyg3tmt", customerPhone); // Téléphone
+        columnValues.put("text_mkygn873", itemsListEscaped); // Articles
+        columnValues.put("numeric_mkyg55qn", order.getTotal().doubleValue()); // Total
+        columnValues.put("color_mkyg7e83", mapOrderStatus(order.getStatus())); // Statut (deuxième colonne)
+        columnValues.put("text_mkygf7m", shippingAddress); // Adresse
+        // Monday date column expects only date (YYYY-MM-DD)
+        LocalDate orderDate = order.getOrderDate() != null ? order.getOrderDate().toLocalDate() : LocalDate.now();
+        columnValues.put("date_mkygxqf9", orderDate.toString()); // Date de Commande
+        columnValues.put("text_mkygcvhp", order.getNotes() != null ? escapeGraphQL(order.getNotes()) : ""); // Notes
 
         String columnValuesJson;
         try {
@@ -154,19 +162,19 @@ public class MondayService {
     private String mapOrderStatus(com.example.silea.enums.OrderStatus status) {
         switch (status) {
             case PENDING:
-                return "Pending";
+                return "En attente";
             case CONFIRMED:
-                return "Confirmed";
+                return "Confirmé";
             case PROCESSING:
-                return "Processing";
+                return "En traitement";
             case SHIPPED:
-                return "Shipped";
+                return "Expédié";
             case DELIVERED:
-                return "Delivered";
+                return "Livré";
             case CANCELLED:
-                return "Cancelled";
+                return "Annulé";
             default:
-                return "Pending";
+                return "En attente";
         }
     }
 

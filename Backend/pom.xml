@@ -110,6 +110,13 @@
 			<artifactId>jackson-datatype-hibernate5-jakarta</artifactId>
 		</dependency>
 
+		<!-- Twilio SDK for WhatsApp Business API -->
+		<dependency>
+			<groupId>com.twilio.sdk</groupId>
+			<artifactId>twilio</artifactId>
+			<version>10.6.4</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>
