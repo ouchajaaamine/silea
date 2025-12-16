@@ -5,6 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Menu, X, ShoppingCart, Search, User, Package, Minus, Plus, Trash2, ArrowRight, Gift, Truck, Shield, Sparkles } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
+import { useTranslation } from "@/lib/translation-context"
 import { filesApi, publicCategoriesApi, type Category } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -23,25 +24,44 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-const languages = ["EN", "FR", "AR"]
-
-// Static nav items (non-category pages)
-const staticNavItems = [
-  { label: "Home", href: "/" },
-]
-
-const endNavItems = [
-  { label: "About", href: "/about" },
-  { label: "Contact", href: "/contact" },
+const languages = [
+  { code: 'en' as const, label: 'EN' },
+  { code: 'fr' as const, label: 'FR' },
+  { code: 'ar' as const, label: 'العربية' },
 ]
 
 export default function Header() {
+  const { language, setLanguage, t, format } = useTranslation()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [currentLang, setCurrentLang] = useState("EN")
   const [scrolled, setScrolled] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const pathname = usePathname()
   const { totalItems, items, subtotal, removeItem, updateQuantity } = useCart()
+  const [hasMounted, setHasMounted] = useState(false)
+
+  const getLocalizedCategoryLabel = (category: Category) => {
+    const slugSource = (category.slug || category.name || '').toLowerCase()
+    if (slugSource.includes('honey')) {
+      return t.nav.categories.honey
+    }
+    if (slugSource.includes('oil')) {
+      return t.nav.categories.oils
+    }
+    if (language === 'ar' && category.nameAr) {
+      return category.nameAr
+    }
+    return category.name
+  }
+
+  // Build nav items with translations
+  const staticNavItems = [
+    { label: t.common.home, href: "/" },
+  ]
+
+  const endNavItems = [
+    { label: t.common.about, href: "/about" },
+    { label: t.common.contact, href: "/contact" },
+  ]
 
   const shipping = subtotal >= 200 ? 0 : 30
   const total = subtotal + shipping
@@ -64,7 +84,7 @@ export default function Header() {
   const navItems = [
     ...staticNavItems,
     ...categories.map(cat => ({
-      label: cat.name,
+      label: getLocalizedCategoryLabel(cat),
       href: `/category/${cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-')}`,
     })),
     ...endNavItems,
@@ -78,6 +98,33 @@ export default function Header() {
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  useEffect(() => {
+    setHasMounted(true)
+  }, [])
+
+  const renderCartButton = () => (
+    <button
+      className={`relative p-1.5 rounded-lg transition-all duration-300 group ${
+        scrolled || !isHomePage
+          ? "hover:bg-[#556B2F]/10"
+          : "hover:bg-white/10"
+      }`}
+    >
+      <ShoppingCart
+        className={`w-4 h-4 transition-colors duration-300 ${
+          scrolled || !isHomePage
+            ? "text-foreground/70 group-hover:text-[#556B2F]"
+            : "text-white drop-shadow-md group-hover:text-white"
+        }`}
+      />
+      {totalItems > 0 && (
+        <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-gradient-to-r from-[#D6A64F] to-[#E8B960] text-[10px] rounded-full flex items-center justify-center text-[#2F3526] font-bold shadow-md animate-in zoom-in duration-200">
+          {totalItems > 9 ? "9+" : totalItems}
+        </span>
+      )}
+    </button>
+  )
 
   const isHomePage = pathname === "/"
 
@@ -172,44 +219,28 @@ export default function Header() {
             <div className="hidden md:flex items-center gap-0.5">
               {languages.map((lang) => (
                 <button
-                  key={lang}
-                  onClick={() => setCurrentLang(lang)}
+                  key={lang.code}
+                  onClick={() => setLanguage(lang.code)}
                   className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-all duration-300 ${
-                    currentLang === lang
+                    language === lang.code
                       ? "bg-gradient-to-r from-[#556B2F] to-[#6B8E23] text-white shadow-md"
                       : scrolled || !isHomePage
                       ? "text-foreground/60 hover:text-[#556B2F] hover:bg-[#556B2F]/10"
                       : "text-white/90 drop-shadow-sm hover:text-white hover:bg-white/20"
-                  }`}
+                  } ${lang.code === 'ar' ? 'font-arabic' : ''}`}
                 >
-                  {lang}
+                  {lang.label}
                 </button>
               ))}
             </div>
 
             {/* Cart */}
-            <Sheet>
-              <SheetTrigger asChild>
-                <button
-                  className={`relative p-1.5 rounded-lg transition-all duration-300 group ${
-                    scrolled || !isHomePage
-                      ? "hover:bg-[#556B2F]/10"
-                      : "hover:bg-white/10"
-                  }`}
-                >
-                  <ShoppingCart
-                    className={`w-4 h-4 transition-colors duration-300 ${
-                      scrolled || !isHomePage ? "text-foreground/70 group-hover:text-[#556B2F]" : "text-white drop-shadow-md group-hover:text-white"
-                    }`}
-                  />
-                  {totalItems > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-gradient-to-r from-[#D6A64F] to-[#E8B960] text-[10px] rounded-full flex items-center justify-center text-[#2F3526] font-bold shadow-md animate-in zoom-in duration-200">
-                      {totalItems > 9 ? "9+" : totalItems}
-                    </span>
-                  )}
-                </button>
-              </SheetTrigger>
-              <SheetContent className="w-full sm:max-w-md p-0 border-l-0 bg-[#FAF7F0]">
+            {hasMounted ? (
+              <Sheet>
+                <SheetTrigger asChild>
+                  {renderCartButton()}
+                </SheetTrigger>
+                <SheetContent className="w-full sm:max-w-md p-0 border-l-0 bg-[#FAF7F0]">
                 {/* Header */}
                 <div className="bg-gradient-to-r from-[#556B2F] to-[#6B8E23] p-6 text-white">
                   <SheetHeader>
@@ -217,34 +248,16 @@ export default function Header() {
                       <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
                         <ShoppingCart className="w-5 h-5" />
                       </div>
-                      Shopping Cart
+                      {t.header.cart}
                     </SheetTitle>
                   </SheetHeader>
                   {totalItems > 0 && (
                     <p className="text-white/80 text-sm mt-2">
-                      {totalItems} item{totalItems > 1 ? "s" : ""} in your cart
+                      {totalItems} {totalItems > 1 ? t.header.items : t.header.item} {t.header.inCart}
                     </p>
                   )}
                 </div>
                 
-                {/* Free Shipping Progress */}
-                {totalItems > 0 && subtotal < 200 && (
-                  <div className="px-6 py-4 bg-[#D6A64F]/10 border-b border-[#D6A64F]/20">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Gift className="w-4 h-4 text-[#D6A64F]" />
-                      <span className="text-sm font-medium text-[#556B2F]">
-                        Add {(200 - subtotal).toFixed(2)} MAD for free shipping!
-                      </span>
-                    </div>
-                    <div className="h-2 bg-[#D6A64F]/20 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-[#D6A64F] to-[#E8B960] rounded-full transition-all duration-500"
-                        style={{ width: `${freeShippingProgress}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
-
                 {/* Cart Content */}
                 <div className="flex-1 overflow-auto p-6" style={{ maxHeight: 'calc(100vh - 380px)' }}>
                   {items.length === 0 ? (
@@ -252,14 +265,14 @@ export default function Header() {
                       <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#556B2F]/10 to-[#D6A64F]/10 flex items-center justify-center mb-6">
                         <ShoppingCart className="w-10 h-10 text-[#556B2F]/30" />
                       </div>
-                      <h3 className="font-serif text-xl font-semibold text-[#556B2F] mb-2">Your cart is empty</h3>
+                      <h3 className="font-serif text-xl font-semibold text-[#556B2F] mb-2">{t.header.emptyCart}</h3>
                       <p className="text-[#556B2F]/60 mb-6 max-w-[200px]">
-                        Discover our premium Moroccan products
+                        {t.cart.empty.description}
                       </p>
                       <Link href="/category/honey">
                         <Button className="bg-[#556B2F] hover:bg-[#556B2F]/90 text-white shadow-lg shadow-[#556B2F]/20">
                           <Sparkles className="w-4 h-4 mr-2" />
-                          Start Shopping
+                          {t.cart.empty.startShopping}
                         </Button>
                       </Link>
                     </div>
@@ -345,15 +358,15 @@ export default function Header() {
                     {/* Price Summary */}
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-[#556B2F]/60">Subtotal</span>
+                        <span className="text-[#556B2F]/60">{t.common.subtotal}</span>
                         <span className="text-[#556B2F]">{subtotal.toFixed(2)} MAD</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-[#556B2F]/60">Shipping</span>
+                        <span className="text-[#556B2F]/60">{t.common.shipping}</span>
                         {shipping === 0 ? (
                           <span className="text-[#556B2F] font-medium flex items-center gap-1">
                             <Gift className="w-3 h-3 text-[#D6A64F]" />
-                            Free
+                            {t.common.free}
                           </span>
                         ) : (
                           <span className="text-[#556B2F]">{shipping.toFixed(2)} MAD</span>
@@ -361,7 +374,7 @@ export default function Header() {
                       </div>
                       <Separator className="bg-[#556B2F]/10 my-2" />
                       <div className="flex justify-between items-center">
-                        <span className="font-semibold text-[#556B2F]">Total</span>
+                        <span className="font-semibold text-[#556B2F]">{t.common.total}</span>
                         <span className="text-2xl font-serif font-bold text-[#D6A64F]">{total.toFixed(2)} MAD</span>
                       </div>
                     </div>
@@ -370,31 +383,34 @@ export default function Header() {
                     <div className="flex items-center justify-center gap-4 py-2">
                       <div className="flex items-center gap-1.5 text-[10px] text-[#556B2F]/50">
                         <Shield className="w-3 h-3" />
-                        Secure
+                        {t.common.secure}
                       </div>
                       <div className="flex items-center gap-1.5 text-[10px] text-[#556B2F]/50">
                         <Truck className="w-3 h-3" />
-                        Fast Delivery
+                        {t.common.fastDelivery}
                       </div>
                     </div>
 
                     {/* Checkout Button */}
                     <Link href="/cart" className="block">
                       <Button className="w-full h-12 bg-gradient-to-r from-[#556B2F] to-[#6B8E23] hover:from-[#4a5f29] hover:to-[#5a7a1e] text-white font-semibold shadow-lg shadow-[#556B2F]/30 transition-all duration-300">
-                        Checkout
+                        {t.header.checkout}
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
                     </Link>
                     
                     <Link href="/" className="block">
                       <Button variant="ghost" className="w-full text-[#556B2F] hover:text-[#556B2F] hover:bg-[#556B2F]/5">
-                        Continue Shopping
+                        {t.header.continueShopping}
                       </Button>
                     </Link>
                   </div>
                 )}
               </SheetContent>
             </Sheet>
+          ) : (
+            renderCartButton()
+          )}
 
             {/* Admin Link */}
             <DropdownMenu>
@@ -478,15 +494,15 @@ export default function Header() {
             <div className="flex items-center gap-1.5 px-3 py-2">
               {languages.map((lang) => (
                 <button
-                  key={lang}
-                  onClick={() => setCurrentLang(lang)}
+                  key={lang.code}
+                  onClick={() => setLanguage(lang.code)}
                   className={`px-2 py-1 rounded-md text-[10px] font-medium transition-all duration-300 ${
-                    currentLang === lang
+                    language === lang.code
                       ? "bg-gradient-to-r from-[#556B2F] to-[#6B8E23] text-white"
                       : "bg-[#556B2F]/10 text-[#556B2F] hover:bg-[#556B2F]/20"
                   }`}
                 >
-                  {lang}
+                  {lang.label}
                 </button>
               ))}
             </div>

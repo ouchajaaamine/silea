@@ -34,23 +34,133 @@ INSERT IGNORE INTO categories (id, name, name_ar, description, slug, image_url, 
 (3, 'Amlou', 'أملو', 'Pâte marocaine à base d''amandes, d''huile d''argan et de miel pour les petits déjeuners premium', 'amlou', '/moroccan-amlou-spread.jpg', true, NOW(), NOW());
 
 -- =====================================================
--- PRODUCTS
+-- PRODUCTS (with multilingual descriptions: EN, FR, AR)
 -- =====================================================
-INSERT IGNORE INTO products (id, name, name_ar, description, price, available, category_id, status, featured, image_url, created_at, updated_at) VALUES
+-- First, update existing products with multilingual descriptions
+UPDATE products SET
+  description = 'Extra virgin Picholine olive oil, hand-harvested in traditional Moroccan olive groves',
+  description_fr = 'Huile d''olive extra vierge de Picholine, récoltée à la main dans les oliveraies traditionnelles du Maroc',
+  description_ar = 'زيت زيتون بيشولين بكر ممتاز، محصود يدوياً من بساتين الزيتون التقليدية في المغرب'
+WHERE id = 1;
+
+UPDATE products SET
+  description = 'Traditional Moroccan olive oil, cold-pressed',
+  description_fr = 'Huile d''olive traditionnelle marocaine, pressée à froid',
+  description_ar = 'زيت زيتون مغربي تقليدي، معصور على البارد'
+WHERE id = 2;
+
+UPDATE products SET
+  description = 'Certified organic olive oil, pesticide and chemical-free',
+  description_fr = 'Huile d''olive biologique certifiée, sans pesticides ni produits chimiques',
+  description_ar = 'زيت زيتون عضوي معتمد، خالٍ من المبيدات والمواد الكيميائية'
+WHERE id = 3;
+
+UPDATE products SET
+  description = 'Pure wild thyme honey harvested from the Atlas Mountains',
+  description_fr = 'Miel de thym sauvage récolté dans les montagnes de l''Atlas',
+  description_ar = 'عسل زعتر بري خالص محصود من جبال الأطلس'
+WHERE id = 4;
+
+UPDATE products SET
+  description = 'Wild lavender honey with delicate floral flavor',
+  description_fr = 'Miel de lavande sauvage à la saveur florale',
+  description_ar = 'عسل خزامى بري بنكهة زهرية رقيقة'
+WHERE id = 5;
+
+UPDATE products SET
+  description = 'Organic orange blossom honey, delicately perfumed',
+  description_fr = 'Miel d''oranger biologique, délicatement parfumé',
+  description_ar = 'عسل زهر البرتقال العضوي، معطر بلطف'
+WHERE id = 6;
+
+UPDATE products SET
+  description = 'Eucalyptus honey with medicinal properties',
+  description_fr = 'Miel d''eucalyptus aux propriétés médicinales',
+  description_ar = 'عسل الكافور بخصائص طبية'
+WHERE id = 7;
+
+UPDATE products SET
+  description = 'Rosemary honey with delicate herbal notes',
+  description_fr = 'Miel de romarin aux notes herbacées et délicates',
+  description_ar = 'عسل إكليل الجبل بنكهات عشبية رقيقة'
+WHERE id = 8;
+
+UPDATE products SET
+  description = 'Royal Amlou prepared with roasted almonds and golden argan oil',
+  description_fr = 'Amlou royal préparé avec des amandes torréfiées et de l''huile d''argan dorée',
+  description_ar = 'أملو ملكي محضر بلوز محمص وزيت أرغان ذهبي'
+WHERE id = 9;
+
+UPDATE products SET
+  description = 'Artisan recipe combining almonds, argan, and wild thyme honey',
+  description_fr = 'Recette artisanale mariant amandes, argan et miel de thym sauvage',
+  description_ar = 'وصفة حرفية تجمع بين اللوز والأرغان وعسل الزعتر البري'
+WHERE id = 10;
+
+-- Insert new products (if they don't exist)
+INSERT IGNORE INTO products (id, name, name_ar, description, description_fr, description_ar, price, available, category_id, status, featured, image_url, created_at, updated_at) VALUES
 -- Oil products (base price is for 5L)
-(1, 'Huile d''olive extra vierge - Picholine', 'زيت زيتون بيشولين ممتاز', 'Huile d''olive extra vierge de Picholine, récoltée à la main dans les oliveraies traditionnelles du Maroc', 450.00, true, 1, 'ACTIVE', true, 'premium-moroccan-olive-oil-bottle-with-traditional.jpg', NOW(), NOW()),
-(2, 'Huile d''olive traditionnelle', 'زيت الزيتون التقليدي', 'Huile d''olive traditionnelle marocaine, pressée à froid', 380.00, true, 1, 'ACTIVE', false, 'traditional-olive-oil.jpg', NOW(), NOW()),
-(3, 'Huile d''olive bio certifiée', 'زيت الزيتون العضوي المعتمد', 'Huile d''olive biologique certifiée, sans pesticides ni produits chimiques', 520.00, true, 1, 'ACTIVE', true, 'organic-olive-oil.jpg', NOW(), NOW()),
+(1, 'Huile d''olive extra vierge - Picholine', 'زيت زيتون بيشولين ممتاز', 
+'Extra virgin Picholine olive oil, hand-harvested in traditional Moroccan olive groves', 
+'Huile d''olive extra vierge de Picholine, récoltée à la main dans les oliveraies traditionnelles du Maroc', 
+'زيت زيتون بيشولين بكر ممتاز، محصود يدوياً من بساتين الزيتون التقليدية في المغرب', 
+450.00, true, 1, 'ACTIVE', true, 'premium-moroccan-olive-oil-bottle-with-traditional.jpg', NOW(), NOW()),
+
+(2, 'Huile d''olive traditionnelle', 'زيت الزيتون التقليدي', 
+'Traditional Moroccan olive oil, cold-pressed', 
+'Huile d''olive traditionnelle marocaine, pressée à froid', 
+'زيت زيتون مغربي تقليدي، معصور على البارد', 
+380.00, true, 1, 'ACTIVE', false, 'traditional-olive-oil.jpg', NOW(), NOW()),
+
+(3, 'Huile d''olive bio certifiée', 'زيت الزيتون العضوي المعتمد', 
+'Certified organic olive oil, pesticide and chemical-free', 
+'Huile d''olive biologique certifiée, sans pesticides ni produits chimiques', 
+'زيت زيتون عضوي معتمد، خالٍ من المبيدات والمواد الكيميائية', 
+520.00, true, 1, 'ACTIVE', true, 'organic-olive-oil.jpg', NOW(), NOW()),
 
 -- Honey products (base price is for 1kg)
-(4, 'Miel de thym pur', 'عسل الزعتر الخالص', 'Miel de thym sauvage récolté dans les montagnes de l''Atlas', 350.00, true, 2, 'ACTIVE', true, 'moroccan-thyme-honey-in-traditional-glass-jar-with.jpg', NOW(), NOW()),
-(5, 'Miel de lavande sauvage', 'عسل الخزامى البري', 'Miel de lavande sauvage à la saveur florale', 380.00, true, 2, 'ACTIVE', true, 'wild-lavender-honey-jar-with-lavender-sprigs.jpg', NOW(), NOW()),
-(6, 'Miel d''oranger bio', 'عسل البرتقال العضوي', 'Miel d''oranger biologique, délicatement parfumé', 320.00, true, 2, 'ACTIVE', false, 'orange-blossom-honey-jar-with-citrus.jpg', NOW(), NOW()),
-(7, 'Miel d''eucalyptus', 'عسل الكالبتوس', 'Miel d''eucalyptus aux propriétés médicinales', 420.00, true, 2, 'ACTIVE', false, 'natural-honey-in-traditional-moroccan-glass-jar.jpg', NOW(), NOW()),
-(8, 'Miel de romarin', 'عسل إكليل الجبل', 'Miel de romarin aux notes herbacées et délicates', 360.00, true, 2, 'ACTIVE', false, 'rosemary-honey.jpg', NOW(), NOW()),
+(4, 'Miel de thym pur', 'عسل الزعتر الخالص', 
+'Pure wild thyme honey harvested from the Atlas Mountains', 
+'Miel de thym sauvage récolté dans les montagnes de l''Atlas', 
+'عسل زعتر بري خالص محصود من جبال الأطلس', 
+350.00, true, 2, 'ACTIVE', true, 'moroccan-thyme-honey-in-traditional-glass-jar-with.jpg', NOW(), NOW()),
+
+(5, 'Miel de lavande sauvage', 'عسل الخزامى البري', 
+'Wild lavender honey with delicate floral flavor', 
+'Miel de lavande sauvage à la saveur florale', 
+'عسل خزامى بري بنكهة زهرية رقيقة', 
+380.00, true, 2, 'ACTIVE', true, 'wild-lavender-honey-jar-with-lavender-sprigs.jpg', NOW(), NOW()),
+
+(6, 'Miel d''oranger bio', 'عسل البرتقال العضوي', 
+'Organic orange blossom honey, delicately perfumed', 
+'Miel d''oranger biologique, délicatement parfumé', 
+'عسل زهر البرتقال العضوي، معطر بلطف', 
+320.00, true, 2, 'ACTIVE', false, 'orange-blossom-honey-jar-with-citrus.jpg', NOW(), NOW()),
+
+(7, 'Miel d''eucalyptus', 'عسل الكالبتوس', 
+'Eucalyptus honey with medicinal properties', 
+'Miel d''eucalyptus aux propriétés médicinales', 
+'عسل الكافور بخصائص طبية', 
+420.00, true, 2, 'ACTIVE', false, 'natural-honey-in-traditional-moroccan-glass-jar.jpg', NOW(), NOW()),
+
+(8, 'Miel de romarin', 'عسل إكليل الجبل', 
+'Rosemary honey with delicate herbal notes', 
+'Miel de romarin aux notes herbacées et délicates', 
+'عسل إكليل الجبل بنكهات عشبية رقيقة', 
+360.00, true, 2, 'ACTIVE', false, 'rosemary-honey.jpg', NOW(), NOW()),
+
 -- Amlou spreads (Category 3)
-(9, 'Amlou royal aux amandes', 'أملو ملكي باللوز', 'Amlou royal préparé avec des amandes torréfiées et de l''huile d''argan dorée', 420.00, true, 3, 'ACTIVE', true, 'royal-amlou-spread.jpg', NOW(), NOW()),
-(10, 'Amlou artisanal au miel de thym', 'أملو بالعسل الزعتر', 'Recette artisanale mariant amandes, argan et miel de thym sauvage', 460.00, true, 3, 'ACTIVE', true, 'artisan-amlou-honey.jpg', NOW(), NOW());
+(9, 'Amlou royal aux amandes', 'أملو ملكي باللوز', 
+'Royal Amlou prepared with roasted almonds and golden argan oil', 
+'Amlou royal préparé avec des amandes torréfiées et de l''huile d''argan dorée', 
+'أملو ملكي محضر بلوز محمص وزيت أرغان ذهبي', 
+420.00, true, 3, 'ACTIVE', true, 'royal-amlou-spread.jpg', NOW(), NOW()),
+
+(10, 'Amlou artisanal au miel de thym', 'أملو بالعسل الزعتر', 
+'Artisan recipe combining almonds, argan, and wild thyme honey', 
+'Recette artisanale mariant amandes, argan et miel de thym sauvage', 
+'وصفة حرفية تجمع بين اللوز والأرغان وعسل الزعتر البري', 
+460.00, true, 3, 'ACTIVE', true, 'artisan-amlou-honey.jpg', NOW(), NOW());
 
 -- =====================================================
 -- PRODUCT SIZE PRICES

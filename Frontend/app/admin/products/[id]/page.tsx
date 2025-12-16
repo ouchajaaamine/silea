@@ -116,6 +116,8 @@ export default function ProductDetailPage() {
     name: "",
     nameArabic: "",
     description: "",
+    descriptionFr: "",
+    descriptionAr: "",
     categoryId: "",
     imageUrl: "",
     available: true,
@@ -196,6 +198,8 @@ export default function ProductDetailPage() {
           name: productData.name,
           nameArabic: productData.nameAr,
           description: productData.description || "",
+          descriptionFr: productData.descriptionFr || "",
+          descriptionAr: productData.descriptionAr || "",
           categoryId: productData.category.id.toString(),
           imageUrl: productData.imageUrl || "",
           available: productData.available,
@@ -361,6 +365,8 @@ export default function ProductDetailPage() {
         name: formData.name,
         nameArabic: formData.nameArabic,
         description: formData.description,
+        descriptionFr: formData.descriptionFr,
+        descriptionAr: formData.descriptionAr,
         price: basePrice,
         available: formData.available,
         imageUrl: formData.imageUrl,
@@ -388,6 +394,8 @@ export default function ProductDetailPage() {
         name: product.name,
         nameArabic: product.nameAr,
         description: product.description || "",
+        descriptionFr: product.descriptionFr || "",
+        descriptionAr: product.descriptionAr || "",
         categoryId: product.category.id.toString(),
         imageUrl: product.imageUrl || "",
         available: product.available,
@@ -863,18 +871,59 @@ export default function ProductDetailPage() {
                         <CardTitle className="text-lg">Description</CardTitle>
                       </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-4">
                       {isEditing ? (
-                        <Textarea
-                          value={formData.description}
-                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                          className="input-glass min-h-[120px]"
-                          placeholder="Enter product description..."
-                        />
+                        <>
+                          <div className="space-y-2">
+                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">English</Label>
+                            <Textarea
+                              value={formData.description}
+                              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                              className="input-glass min-h-[100px]"
+                              placeholder="Enter product description in English..."
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">French</Label>
+                            <Textarea
+                              value={formData.descriptionFr}
+                              onChange={(e) => setFormData({ ...formData, descriptionFr: e.target.value })}
+                              className="input-glass min-h-[100px]"
+                              placeholder="Description du produit en français..."
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Arabic</Label>
+                            <Textarea
+                              value={formData.descriptionAr}
+                              onChange={(e) => setFormData({ ...formData, descriptionAr: e.target.value })}
+                              className="input-glass min-h-[100px]"
+                              placeholder="وصف المنتج بالعربية..."
+                              dir="rtl"
+                            />
+                          </div>
+                        </>
                       ) : (
-                        <p className="text-muted-foreground leading-relaxed">
-                          {product.description || "No description available"}
-                        </p>
+                        <>
+                          <div>
+                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">English</Label>
+                            <p className="text-muted-foreground leading-relaxed mt-1">
+                              {product.description || "No description available"}
+                            </p>
+                          </div>
+                          <div>
+                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">French</Label>
+                            <p className="text-muted-foreground leading-relaxed mt-1">
+                              {product.descriptionFr || "Aucune description disponible"}
+                            </p>
+                          </div>
+                          <div>
+                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Arabic</Label>
+                            <p className="text-muted-foreground leading-relaxed mt-1 font-arabic" dir="rtl">
+                              {product.descriptionAr || "لا يوجد وصف"}
+                            </p>
+                          </div>
+                        </>
                       )}
                     </CardContent>
                   </Card>

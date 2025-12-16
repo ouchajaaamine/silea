@@ -37,6 +37,8 @@ export interface Product {
   name: string;
   nameAr: string;
   description: string;
+  descriptionFr?: string;
+  descriptionAr?: string;
   price: number; // Base price for largest size (5L for oil, 1kg for honey)
   available: boolean;
   imageUrl: string;
@@ -127,6 +129,17 @@ export function getMediumPrice(product: Product): number {
   const sizes = getSizesForCategory(product.category?.name || '');
   const midIndex = Math.floor(sizes.length / 2);
   return Math.round(product.price * sizes[midIndex].priceMultiplier * 100) / 100;
+}
+
+// Get localized description based on language
+export function getLocalizedDescription(product: Product, language: 'en' | 'fr' | 'ar'): string {
+  if (language === 'fr' && product.descriptionFr) {
+    return product.descriptionFr;
+  }
+  if (language === 'ar' && product.descriptionAr) {
+    return product.descriptionAr;
+  }
+  return product.description || '';
 }
 
 // Get price from explicit sizePrices if available, otherwise fallback to multiplier calculation
@@ -656,6 +669,8 @@ export const productsApi = {
     name: string;
     nameArabic: string;
     description: string;
+    descriptionFr?: string;
+    descriptionAr?: string;
     price: number;
     available: boolean;
     categoryId: number;
@@ -674,6 +689,8 @@ export const productsApi = {
     name: string;
     nameArabic: string;
     description: string;
+    descriptionFr?: string;
+    descriptionAr?: string;
     price: number;
     available: boolean;
     imageUrl: string;

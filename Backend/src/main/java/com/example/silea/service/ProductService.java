@@ -29,12 +29,15 @@ public class ProductService {
      * Create a new product
      */
     public Product createProduct(String name, String nameArabic, String description,
+                               String descriptionFr, String descriptionAr,
                                BigDecimal price, Boolean available, Long categoryId,
                                String imageUrl) {
         Product product = new Product();
         product.setName(name);
         product.setNameAr(nameArabic);
         product.setDescription(description);
+        product.setDescriptionFr(descriptionFr);
+        product.setDescriptionAr(descriptionAr);
         product.setPrice(price);
         product.setAvailable(available != null ? available : true);
         product.setStatus(ProductStatus.ACTIVE);
@@ -54,6 +57,7 @@ public class ProductService {
      * Update product information
      */
     public Product updateProduct(Long productId, String name, String nameArabic, String description,
+                               String descriptionFr, String descriptionAr,
                                BigDecimal price, Boolean available, String imageUrl) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("Product not found"));
@@ -61,6 +65,8 @@ public class ProductService {
         product.setName(name);
         product.setNameAr(nameArabic);
         product.setDescription(description);
+        product.setDescriptionFr(descriptionFr);
+        product.setDescriptionAr(descriptionAr);
         product.setPrice(price);
         product.setAvailable(available);
         product.setImageUrl(imageUrl);

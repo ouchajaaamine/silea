@@ -6,8 +6,12 @@ import { Facebook, Instagram, Mail, MapPin, Phone, ArrowRight } from "lucide-rea
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { publicCategoriesApi, type Category } from "@/lib/api"
+import { useTranslation } from "@/lib/translation-context"
+import { useCategoryDialog } from "@/lib/category-dialog-context"
 
 export default function Footer() {
+  const { t, language } = useTranslation()
+  const { openDialog } = useCategoryDialog()
   const [categories, setCategories] = useState<Category[]>([])
 
   useEffect(() => {
@@ -21,6 +25,7 @@ export default function Footer() {
     }
     fetchCategories()
   }, [])
+
   return (
     <footer className="relative mt-24 overflow-hidden">
       {/* Moroccan Pattern Background */}
@@ -29,29 +34,32 @@ export default function Footer() {
       {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#556B2F]/5 via-background to-[#D6A64F]/5" />
 
-      {/* Newsletter Section */}
+      {/* Call to Action Section */}
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="glass-card p-8 md:p-12 rounded-3xl">
+        <div className="glass-card p-8 md:p-12 rounded-3xl bg-gradient-to-br from-[#556B2F]/10 to-[#D6A64F]/10">
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div>
-              <h3 className="font-serif text-3xl font-bold mb-3 gradient-text">
-                Join Our Journey
+              <h3 className="font-serif text-3xl md:text-4xl font-bold mb-3 gradient-text">
+                {t.footer.cta.title}
               </h3>
-              <p className="text-muted-foreground">
-                Subscribe to receive updates on new products, special offers, and stories from Beni Mellal.
+              <p className="text-muted-foreground text-lg">
+                {t.footer.cta.description}
               </p>
             </div>
-            <form className="flex flex-col sm:flex-row gap-3">
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 input-glass h-12"
-              />
-              <Button className="btn-primary h-12 px-8">
-                Subscribe
-                <ArrowRight className="w-4 h-4 ml-2" />
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button 
+                onClick={openDialog}
+                className="flex-1 w-full btn-primary h-14 text-base"
+              >
+                {t.footer.cta.shopNow}
+                <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
-            </form>
+              <Link href="/about" className="flex-1">
+                <Button variant="outline" className="w-full btn-secondary h-14 text-base">
+                  {t.footer.cta.learnMore}
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -69,7 +77,7 @@ export default function Footer() {
               />
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Pure treasures from the mountains of Beni Mellal. Authentic, traditional, and crafted with care for generations.
+              {t.footer.brandDescription}
             </p>
             <div className="flex gap-3">
               <a
@@ -89,7 +97,7 @@ export default function Footer() {
 
           {/* Shop Links */}
           <div>
-            <h4 className="font-serif font-semibold text-lg mb-6 text-[#556B2F]">Shop</h4>
+            <h4 className="font-serif font-semibold text-lg mb-6 text-[#556B2F]">{t.footer.shop}</h4>
             <ul className="space-y-3">
               {categories.length > 0 && (
                 <li>
@@ -98,7 +106,7 @@ export default function Footer() {
                     className="text-sm text-muted-foreground hover:text-[#556B2F] transition-colors duration-300 flex items-center gap-2 group"
                   >
                     <span className="w-0 group-hover:w-2 h-px bg-[#D6A64F] transition-all duration-300" />
-                    All Products
+                    {t.footer.allProducts}
                   </Link>
                 </li>
               )}
@@ -109,7 +117,7 @@ export default function Footer() {
                     className="text-sm text-muted-foreground hover:text-[#556B2F] transition-colors duration-300 flex items-center gap-2 group"
                   >
                     <span className="w-0 group-hover:w-2 h-px bg-[#D6A64F] transition-all duration-300" />
-                    {category.name}
+                    {language === 'ar' && category.nameAr ? category.nameAr : category.name}
                   </Link>
                 </li>
               ))}
@@ -119,7 +127,7 @@ export default function Footer() {
                   className="text-sm text-muted-foreground hover:text-[#556B2F] transition-colors duration-300 flex items-center gap-2 group"
                 >
                   <span className="w-0 group-hover:w-2 h-px bg-[#D6A64F] transition-all duration-300" />
-                  Gift Sets
+                  {t.footer.giftSets}
                 </Link>
               </li>
               <li>
@@ -128,7 +136,7 @@ export default function Footer() {
                   className="text-sm text-muted-foreground hover:text-[#556B2F] transition-colors duration-300 flex items-center gap-2 group"
                 >
                   <span className="w-0 group-hover:w-2 h-px bg-[#D6A64F] transition-all duration-300" />
-                  New Arrivals
+                  {t.footer.newArrivals}
                 </Link>
               </li>
             </ul>
@@ -136,15 +144,15 @@ export default function Footer() {
 
           {/* Support Links */}
           <div>
-            <h4 className="font-serif font-semibold text-lg mb-6 text-[#556B2F]">Support</h4>
+            <h4 className="font-serif font-semibold text-lg mb-6 text-[#556B2F]">{t.footer.support}</h4>
             <ul className="space-y-3">
               {[
-                { label: "About Us", href: "/about" },
-                { label: "Contact", href: "/contact" },
-                { label: "Track Order", href: "/track-order" },
-                { label: "Shipping Info", href: "#" },
-                { label: "Returns & Refunds", href: "#" },
-                { label: "FAQ", href: "#" },
+                { label: t.common.about, href: "/about" },
+                { label: t.common.contact, href: "/contact" },
+                { label: t.footer.trackOrder, href: "/track-order" },
+                { label: t.footer.shippingInfo, href: "#" },
+                { label: t.footer.returns, href: "#" },
+                { label: t.footer.faq, href: "#" },
               ].map((link) => (
                 <li key={link.href + link.label}>
                   <Link
@@ -161,14 +169,14 @@ export default function Footer() {
 
           {/* Contact Info */}
           <div>
-            <h4 className="font-serif font-semibold text-lg mb-6 text-[#556B2F]">Contact</h4>
+            <h4 className="font-serif font-semibold text-lg mb-6 text-[#556B2F]">{t.footer.contact}</h4>
             <div className="space-y-4">
               <div className="flex items-start gap-3 group">
                 <div className="w-10 h-10 rounded-xl bg-[#D6A64F]/10 flex items-center justify-center flex-shrink-0 group-hover:bg-[#D6A64F]/20 transition-colors">
                   <Mail className="w-4 h-4 text-[#D6A64F]" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Email</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t.common.email}</p>
                   <a
                     href="mailto:contact@silea.com"
                     className="text-sm font-medium hover:text-[#556B2F] transition-colors"
@@ -183,27 +191,18 @@ export default function Footer() {
                   <Phone className="w-4 h-4 text-[#D6A64F]" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Phone</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t.common.phone}</p>
                   <a
                     href="tel:+212600000000"
                     className="text-sm font-medium hover:text-[#556B2F] transition-colors"
+                    dir="ltr"
                   >
                     +212 6 00 00 00 00
                   </a>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 group">
-                <div className="w-10 h-10 rounded-xl bg-[#D6A64F]/10 flex items-center justify-center flex-shrink-0 group-hover:bg-[#D6A64F]/20 transition-colors">
-                  <MapPin className="w-4 h-4 text-[#D6A64F]" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Location</p>
-                  <p className="text-sm font-medium">
-                    Beni Mellal, Morocco
-                  </p>
-                </div>
-              </div>
+
             </div>
           </div>
         </div>
@@ -212,17 +211,17 @@ export default function Footer() {
         <div className="border-t border-[#556B2F]/10 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-xs text-muted-foreground text-center md:text-left">
-              © 2025 Silea. All rights reserved. Pure treasures from the mountains of Beni Mellal.
+              {t.footer.copyright}
             </p>
             <div className="flex items-center gap-6 text-xs text-muted-foreground">
               <a href="#" className="hover:text-[#556B2F] transition-colors">
-                Privacy Policy
+                {t.footer.privacy}
               </a>
               <a href="#" className="hover:text-[#556B2F] transition-colors">
-                Terms of Service
+                {t.footer.terms}
               </a>
               <a href="#" className="hover:text-[#556B2F] transition-colors">
-                Cookie Policy
+                {t.footer.cookies}
               </a>
             </div>
           </div>

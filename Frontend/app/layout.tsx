@@ -4,7 +4,27 @@ import { Analytics } from "@vercel/analytics/next"
 import { Toaster } from "sonner"
 import { CartProvider } from "@/lib/cart-context"
 import { AuthProvider } from "@/lib/auth-context"
+import { TranslationProvider } from "@/lib/translation-context"
+import { CategoryDialogProvider } from "@/lib/category-dialog-context"
+import PageTransition from "@/components/page-transition"
+import ThikrNotification from "@/components/thikr-notification"
+import { Almarai, Tajawal } from "next/font/google"
+import { headers } from "next/headers"
 import "./globals.css"
+
+const almarai = Almarai({
+  subsets: ["arabic"],
+  weight: ["300", "400", "700", "800"],
+  variable: "--font-almarai",
+  display: "swap",
+})
+
+const tajawal = Tajawal({
+  subsets: ["arabic", "latin"],
+  weight: ["400", "500", "700", "800"],
+  variable: "--font-tajawal",
+  display: "swap",
+})
 
 export const metadata: Metadata = {
   title: "Silea – Pure Treasures from Beni Mellal",
@@ -43,7 +63,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en" className="scroll-smooth" dir="ltr">
       <head>
         {/* Google Fonts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -53,20 +73,26 @@ export default function RootLayout({
           rel="stylesheet" 
         />
       </head>
-      <body className="antialiased min-h-screen">
-        <AuthProvider>
-          <CartProvider>
-            {children}
+      <body className={`${almarai.variable} ${tajawal.variable} antialiased min-h-screen`}>
+        <AdminWrapper>
+          <AuthProvider>
+            <CartProvider>
+              <ThikrNotification />
+              <PageTransition>
+                {children}
+              </PageTransition>
             <Toaster 
               position="top-right"
+              duration={1000}
               toastOptions={{
                 style: {
-                  background: 'rgba(255, 255, 255, 0.9)',
+                  background: 'rgba(255, 255, 255, 0.95)',
                   backdropFilter: 'blur(20px)',
                   border: '1px solid rgba(85, 107, 47, 0.2)',
                   borderRadius: '16px',
                   padding: '16px',
                   boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
+                  animation: 'slideInRight 0.3s ease-out, fadeOut 0.2s ease-in 0.8s',
                 },
                 classNames: {
                   success: 'border-l-4 !border-l-[#556B2F]',
@@ -75,10 +101,30 @@ export default function RootLayout({
                 },
               }}
             />
-          </CartProvider>
-        </AuthProvider>
+            </CartProvider>
+          </AuthProvider>
+        </AdminWrapper>
         <Analytics />
       </body>
     </html>
+  )
+}
+
+// Wrapper to conditionally apply TranslationProvider and CategoryDialogProvider
+function AdminWrapper({ children }: { children: React.ReactNode }) {
+  'use client'
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
+  const isAdmin = pathname.startsWith('/admin')
+  
+  if (isAdmin) {
+    return <>{children}</>
+  }
+  
+  return (
+    <TranslationProvider>
+      <CategoryDialogProvider>
+        {children}
+      </CategoryDialogProvider>
+    </TranslationProvider>
   )
 }

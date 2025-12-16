@@ -25,10 +25,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { productsApi, publicCategoriesApi, filesApi, type Product, type Category, getSmallestPrice, getPriceRange, getProductImageUrl } from "@/lib/api"
+import { productsApi, publicCategoriesApi, filesApi, type Product, type Category, getSmallestPrice, getPriceRange, getProductImageUrl, getLocalizedDescription } from "@/lib/api"
+import { useTranslation } from "@/lib/translation-context"
 
 export default function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
+  const { t, language, format } = useTranslation()
   const [products, setProducts] = useState<Product[]>([])
   const [category, setCategory] = useState<Category | null>(null)
   const [loading, setLoading] = useState(true)
@@ -164,20 +166,20 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
     return filtered
   }, [products, priceRange, sortBy])
 
-  if (categoryLoading) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-[#556B2F] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading category...</p>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    )
-  }
+  const localizedCategoryName = useMemo(() => {
+    if (!category) return ''
+    const slugSource = (category.slug || category.name || '').toLowerCase()
+    if (slugSource.includes('honey')) {
+      return t.nav.categories.honey
+    }
+    if (slugSource.includes('oil')) {
+      return t.nav.categories.oils
+    }
+    if (language === 'ar' && category.nameAr) {
+      return category.nameAr
+    }
+    return category.name
+  }, [category, language, t.nav.categories.honey, t.nav.categories.oils])
 
   if (!category) {
     return (
@@ -273,20 +275,20 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
             <div className="space-y-6 max-w-2xl">
               {/* Breadcrumb */}
               <nav className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Link href="/" className="hover:text-[#556B2F] transition-colors">Home</Link>
+                <Link href="/" className="hover:text-[#556B2F] transition-colors">{t.common.home}</Link>
                 <span>/</span>
-                <span className="text-[#556B2F] font-medium">{category.name}</span>
+                <span className="text-[#556B2F] font-medium">{localizedCategoryName}</span>
               </nav>
               
               <div className="space-y-4">
                 <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#D6A64F]/10 text-[#D6A64F] text-sm font-medium">
                   <Sparkles className="w-4 h-4" />
-                  Premium Collection
+                  {t.home.featured.title}
                 </span>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-[#2d3a1f] leading-tight">
-                  {category.name}
+                  {localizedCategoryName}
                 </h1>
-                <p className="text-lg text-muted-foreground leading-relaxed">{category.description || `Discover our premium ${category.name} collection from Beni Mellal.`}</p>
+                <p className="text-lg text-muted-foreground leading-relaxed">{category.description || format(t.home.categories.explore, { category: localizedCategoryName })}</p>
               </div>
               
               {/* Stats */}
@@ -297,7 +299,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                   </div>
                   <div>
                     <p className="text-xl font-bold text-[#2d3a1f]">{products.length}</p>
-                    <p className="text-xs text-muted-foreground">Products</p>
+                    <p className="text-xs text-muted-foreground">{t.category.productsLabel}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -305,8 +307,8 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                     <Award className="w-5 h-5 text-[#D6A64F]" />
                   </div>
                   <div>
-                    <p className="text-xl font-bold text-[#2d3a1f]">100%</p>
-                    <p className="text-xs text-muted-foreground">Natural</p>
+                    <p className="text-xl font-bold text-[#2d3a1f]">{t.category.hundredPercent}</p>
+                    <p className="text-xs text-muted-foreground">{t.category.naturalLabel}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -314,8 +316,8 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                     <Shield className="w-5 h-5 text-[#556B2F]" />
                   </div>
                   <div>
-                    <p className="text-xl font-bold text-[#2d3a1f]">5★</p>
-                    <p className="text-xs text-muted-foreground">Rating</p>
+                    <p className="text-xl font-bold text-[#2d3a1f]">{t.category.fiveStars}</p>
+                    <p className="text-xs text-muted-foreground">{t.category.ratingLabel}</p>
                   </div>
                 </div>
               </div>
@@ -380,13 +382,13 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                 {/* Filter Card */}
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#e9e6dd]">
                   <h3 className="font-serif font-semibold mb-6 text-lg flex items-center gap-2 text-[#2d3a1f]">
-                    <SlidersHorizontal className="w-4 h-4 text-[#556B2F]" />
-                    Filters
-                  </h3>
+                      <SlidersHorizontal className="w-4 h-4 text-[#556B2F]" />
+                      {t.category.filters}
+                    </h3>
 
                   {/* Price Filter */}
                   <div className="space-y-4 mb-8">
-                    <h4 className="text-sm font-medium text-[#2d3a1f]">Price Range</h4>
+                    <h4 className="text-sm font-medium text-[#2d3a1f]">{t.category.price} Range</h4>
                     <div className="pt-2 pb-4">
                       <Slider
                         value={priceRange}
@@ -410,18 +412,18 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
 
                   {/* Sort */}
                   <div className="space-y-4">
-                    <h4 className="text-sm font-medium text-[#2d3a1f]">Sort By</h4>
+                    <h4 className="text-sm font-medium text-[#2d3a1f]">{t.category.sortBy}</h4>
                     <Select value={sortBy} onValueChange={setSortBy}>
                       <SelectTrigger className="w-full bg-[#f8f6f1] border-[#e9e6dd] focus:ring-[#556B2F] focus:border-[#556B2F]">
-                        <SelectValue placeholder="Sort by" />
+                        <SelectValue placeholder={t.category.sortPlaceholder} />
                       </SelectTrigger>
                       <SelectContent className="bg-white border-[#e9e6dd]">
-                        <SelectItem value="all">📋 All Products</SelectItem>
-                        <SelectItem value="featured">⭐ Featured</SelectItem>
-                        <SelectItem value="price-low">↑ Price: Low to High</SelectItem>
-                        <SelectItem value="price-high">↓ Price: High to Low</SelectItem>
-                        <SelectItem value="name">🔤 Name A-Z</SelectItem>
-                        <SelectItem value="newest">🆕 Newest</SelectItem>
+                        <SelectItem value="all">📋 {t.category.all}</SelectItem>
+                        <SelectItem value="featured">⭐ {t.common.featured}</SelectItem>
+                        <SelectItem value="price-low">↑ {t.category.lowToHigh}</SelectItem>
+                        <SelectItem value="price-high">↓ {t.category.highToLow}</SelectItem>
+                        <SelectItem value="name">🔤 {t.category.nameAZ}</SelectItem>
+                        <SelectItem value="newest">🆕 {t.common.new}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -435,7 +437,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                       setSortBy("all")
                     }}
                   >
-                    Reset Filters
+                    {t.category.clearFilters}
                   </Button>
                 </div>
                 
@@ -446,8 +448,8 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                       <Leaf className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <p className="font-semibold text-[#2d3a1f]">100% Natural</p>
-                      <p className="text-xs text-muted-foreground">No preservatives</p>
+                      <p className="font-semibold text-[#2d3a1f]">{t.product.natural}</p>
+                      <p className="text-xs text-muted-foreground">{t.home.trust?.noPreservatives}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -455,8 +457,8 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                       <TrendingUp className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <p className="font-semibold text-[#2d3a1f]">Direct Source</p>
-                      <p className="text-xs text-muted-foreground">From Beni Mellal</p>
+                      <p className="font-semibold text-[#2d3a1f]">{t.home.trust?.directSource}</p>
+                      <p className="text-xs text-muted-foreground">{t.home.trust?.fromBeniMellal}</p>
                     </div>
                   </div>
                 </div>
@@ -474,8 +476,8 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                 </SheetTrigger>
                 <SheetContent side="left" className="bg-white border-r border-[#e9e6dd]">
                   <SheetHeader>
-                    <SheetTitle className="font-serif text-[#2d3a1f]">Filters</SheetTitle>
-                    <SheetDescription>Refine your search</SheetDescription>
+                    <SheetTitle className="font-serif text-[#2d3a1f]">{t.category.filters}</SheetTitle>
+                    <SheetDescription>{t.category.refine}</SheetDescription>
                   </SheetHeader>
                   <div className="py-6 space-y-6">
                     {/* Price Filter */}
@@ -513,7 +515,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                       </Select>
                     </div>
                     
-                    <Button
+                      <Button
                       variant="outline"
                       className="w-full border-[#556B2F]/30 text-[#556B2F]"
                       onClick={() => {
@@ -521,7 +523,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                         setSortBy("all")
                       }}
                     >
-                      Reset Filters
+                      {t.category.clearFilters}
                     </Button>
                   </div>
                 </SheetContent>
@@ -551,28 +553,19 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
             <div className="lg:col-span-4">
               {/* Results Count & View Toggle */}
               <div className="flex items-center justify-between mb-6 p-4 bg-white rounded-xl border border-[#e9e6dd]">
-                <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1">
                   <p className="font-medium text-[#2d3a1f]">
-                    {loading ? (
-                      <span className="flex items-center gap-2">
-                        <span className="w-4 h-4 border-2 border-[#556B2F]/30 border-t-[#556B2F] rounded-full animate-spin" />
-                        Loading products...
-                      </span>
-                    ) : (
-                      <>
-                        <span className="text-[#D6A64F] font-bold">{filteredAndSortedProducts.length}</span>
-                        {" "}product{filteredAndSortedProducts.length !== 1 ? 's' : ''} found
-                      </>
-                    )}
+                    <span className="text-[#D6A64F] font-bold">{filteredAndSortedProducts.length}</span>
+                    {" "}{t.category.productsLabel} {filteredAndSortedProducts.length !== 1 ? t.category.results : t.category.results}
                   </p>
-                  {!loading && !error && products.length > 0 && filteredAndSortedProducts.length < products.length && (
+                  {!error && products.length > 0 && filteredAndSortedProducts.length < products.length && (
                     <p className="text-xs text-muted-foreground">
                       Filtered from {products.length} total products
                     </p>
                   )}
                 </div>
                 <div className="hidden lg:flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground mr-2">View:</span>
+                  <span className="text-sm text-muted-foreground mr-2">{t.common.viewAll.split(' ')[0]}:</span>
                   <Button
                     variant={viewMode === "grid" ? "default" : "outline"}
                     size="icon"
@@ -592,20 +585,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                 </div>
               </div>
 
-              {loading ? (
-                <div className={`grid gap-6 ${viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-[#e9e6dd] animate-pulse">
-                      <div className={viewMode === "grid" ? "h-64 bg-gradient-to-br from-[#f8f6f1] to-[#ede9e0]" : "h-32 w-32 bg-gradient-to-br from-[#f8f6f1] to-[#ede9e0]"} />
-                      <div className="p-5 space-y-3">
-                        <div className="h-3 w-20 bg-[#e9e6dd] rounded-full" />
-                        <div className="h-5 w-full bg-[#e9e6dd] rounded-full" />
-                        <div className="h-4 w-24 bg-[#e9e6dd] rounded-full" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : error ? (
+              {error ? (
                 <div className="text-center py-20 bg-white rounded-3xl border border-[#e9e6dd] shadow-sm">
                   <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-6">
                     <span className="text-4xl">⚠️</span>
@@ -652,7 +632,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                             
                             {/* Quick View Hint */}
                             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-white/95 backdrop-blur-sm text-[#556B2F] text-sm font-medium opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
-                              View Sizes & Prices
+                              {t.product.viewSizes}
                             </div>
                             
                             {/* Natural Badge */}
@@ -691,7 +671,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                             <div className="flex items-end justify-between pt-3 border-t border-[#e9e6dd]">
                               <div className="flex flex-col">
                                 <span className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
-                                  Starting from
+                                  {t.product.startingFrom}
                                 </span>
                                 <div className="flex items-baseline gap-1">
                                   <span className="text-2xl font-serif font-bold text-[#D6A64F]">
@@ -701,7 +681,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                                 </div>
                               </div>
                               <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#556B2F]/10 text-[#556B2F] text-xs font-medium group-hover:bg-[#556B2F] group-hover:text-white transition-colors">
-                                Choose Size
+                                {t.home.chooseSize}
                                 <svg className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                 </svg>
@@ -742,7 +722,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                                 </h3>
                               </Link>
                               <p className="text-sm text-muted-foreground/70 font-arabic mb-2">{product.nameAr}</p>
-                              <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>
+                              <p className="text-sm text-muted-foreground line-clamp-2">{getLocalizedDescription(product, language)}</p>
                             </div>
                             <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#556B2F]/10">
                               <div className="flex flex-col">
@@ -764,7 +744,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                                 </div>
                                 <Link href={`/product/${product.id}`}>
                                   <Button className="btn-primary">
-                                    Select Size
+                                    {t.product.selectSize}
                                   </Button>
                                 </Link>
                               </div>
@@ -781,13 +761,13 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                     <SlidersHorizontal className="w-10 h-10 text-[#556B2F]/50" />
                   </div>
                   <h3 className="font-serif text-2xl font-bold mb-2 text-[#2d3a1f]">
-                    {products.length === 0 ? "No Products Available" : "No Products Match"}
+                      {products.length === 0 ? t.category.noProducts : t.category.noProducts}
                   </h3>
                   <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    {products.length === 0 
-                      ? "There are no products in this category yet. Please check back later."
-                      : `No products match the price range ${priceRange[0]} - ${priceRange[1]} MAD. Try adjusting your filters.`
-                    }
+                      {products.length === 0 
+                        ? t.category.noProducts
+                        : format(t.category.noProducts, { min: priceRange[0], max: priceRange[1] })
+                      }
                   </p>
                   {products.length > 0 && (
                     <Button

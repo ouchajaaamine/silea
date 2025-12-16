@@ -196,6 +196,8 @@ public class ProductController {
                 request.getName(),
                 request.getNameArabic(),
                 request.getDescription(),
+                request.getDescriptionFr(),
+                request.getDescriptionAr(),
                 request.getPrice(),
                 request.getAvailable(),
                 request.getCategoryId(),
@@ -256,6 +258,8 @@ public class ProductController {
                 request.getName(),
                 request.getNameArabic(),
                 request.getDescription(),
+                request.getDescriptionFr(),
+                request.getDescriptionAr(),
                 request.getPrice(),
                 request.getAvailable(),
                 request.getImageUrl()
@@ -660,6 +664,8 @@ public class ProductController {
         private String name;
         private String nameArabic;
         private String description;
+        private String descriptionFr;
+        private String descriptionAr;
         private BigDecimal price;
         private Boolean available;
         private Long categoryId;
@@ -677,6 +683,12 @@ public class ProductController {
 
         public String getDescription() { return description; }
         public void setDescription(String description) { this.description = description; }
+
+        public String getDescriptionFr() { return descriptionFr; }
+        public void setDescriptionFr(String descriptionFr) { this.descriptionFr = descriptionFr; }
+
+        public String getDescriptionAr() { return descriptionAr; }
+        public void setDescriptionAr(String descriptionAr) { this.descriptionAr = descriptionAr; }
 
         public BigDecimal getPrice() { return price; }
         public void setPrice(BigDecimal price) { this.price = price; }

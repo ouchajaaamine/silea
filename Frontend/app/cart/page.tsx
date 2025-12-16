@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
 import Link from "next/link"
@@ -24,6 +24,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useCart } from "@/lib/cart-context"
+import { useTranslation } from "@/lib/translation-context"
 import { ordersApi, filesApi } from "@/lib/api"
 import { toast } from "sonner"
 
@@ -44,6 +45,7 @@ interface FormErrors {
 }
 
 export default function CartPage() {
+  const { t, format, language } = useTranslation()
   const { items, removeItem, updateQuantity, subtotal, clearCart, totalItems } = useCart()
   const [step, setStep] = useState<CheckoutStep>("cart")
   const [loading, setLoading] = useState(false)
@@ -51,6 +53,18 @@ export default function CartPage() {
   const [showSuccessDialog, setShowSuccessDialog] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
   const [copied, setCopied] = useState(false)
+  const [showDebug, setShowDebug] = useState(false)
+
+  // Debug: Log cart items
+  useEffect(() => {
+    console.log('Cart Items:', items)
+    console.log('Total Items:', totalItems)
+    console.log('Subtotal:', subtotal)
+    if (typeof window !== 'undefined') {
+      const savedCart = localStorage.getItem('silea_cart')
+      console.log('LocalStorage Cart:', savedCart)
+    }
+  }, [items, totalItems, subtotal])
 
   const [formData, setFormData] = useState({
     customerName: "",
@@ -164,19 +178,45 @@ export default function CartPage() {
   }
 
   const steps = [
-    { id: "cart", label: "Cart", icon: ShoppingBag },
-    { id: "info", label: "Details", icon: MapPin },
-    { id: "payment", label: "Payment", icon: CreditCard },
-    { id: "done", label: "Done", icon: Check },
+    { id: "cart", label: t.cart.steps.cart, icon: ShoppingBag },
+    { id: "info", label: t.cart.steps.details, icon: MapPin },
+    { id: "payment", label: t.cart.steps.payment, icon: CreditCard },
+    { id: "done", label: t.cart.steps.done, icon: Check },
   ]
 
   const currentStepIndex = steps.findIndex((s) => s.id === step)
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF7F0]">
+    <div className="min-h-screen flex flex-col bg-[#FAF7F0] relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        {/* Floating Circles */}
+        <div className="absolute top-20 left-10 w-72 h-72 bg-[#556B2F]/5 rounded-full blur-3xl animate-float" style={{ animationDelay: '0s', animationDuration: '20s' }} />
+        <div className="absolute top-40 right-20 w-96 h-96 bg-[#D6A64F]/5 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s', animationDuration: '25s' }} />
+        <div className="absolute bottom-20 left-1/4 w-80 h-80 bg-[#556B2F]/5 rounded-full blur-3xl animate-float" style={{ animationDelay: '4s', animationDuration: '22s' }} />
+        <div className="absolute bottom-40 right-1/3 w-64 h-64 bg-[#D6A64F]/5 rounded-full blur-3xl animate-float" style={{ animationDelay: '6s', animationDuration: '18s' }} />
+        
+        {/* Floating Icons */}
+        <div className="absolute top-32 right-32 opacity-5 animate-float" style={{ animationDelay: '1s', animationDuration: '15s' }}>
+          <ShoppingBag className="w-24 h-24 text-[#556B2F]" />
+        </div>
+        <div className="absolute bottom-32 left-32 opacity-5 animate-float" style={{ animationDelay: '3s', animationDuration: '18s' }}>
+          <Sparkles className="w-20 h-20 text-[#D6A64F]" />
+        </div>
+        <div className="absolute top-1/2 left-20 opacity-5 animate-float" style={{ animationDelay: '5s', animationDuration: '20s' }}>
+          <Gift className="w-16 h-16 text-[#556B2F]" />
+        </div>
+        <div className="absolute top-1/3 right-40 opacity-5 animate-float" style={{ animationDelay: '7s', animationDuration: '16s' }}>
+          <Heart className="w-18 h-18 text-[#D6A64F]" />
+        </div>
+
+        {/* Gradient Orbs */}
+        <div className="absolute top-0 left-1/2 w-[600px] h-[600px] bg-gradient-to-br from-[#556B2F]/3 via-transparent to-[#D6A64F]/3 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2 animate-pulse" style={{ animationDuration: '8s' }} />
+      </div>
+
       <Header />
 
-      <section className="pt-28 pb-16 px-4 sm:px-6 lg:px-8 flex-1">
+      <section className="pt-28 pb-16 px-4 sm:px-6 lg:px-8 flex-1 relative z-10">
         <div className="max-w-6xl mx-auto">
           {/* Progress Steps */}
           <div className="mb-12">
@@ -216,48 +256,153 @@ export default function CartPage() {
           {/* Cart Step */}
           {step === "cart" && (
             <>
-              <div className="text-center mb-10">
-                <h1 className="text-4xl md:text-5xl font-serif font-bold text-[#556B2F] mb-3">Shopping Cart</h1>
-                <p className="text-[#556B2F]/60">Review your items before checkout</p>
+              <div className="text-center mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
+                <h1 className="text-4xl md:text-5xl font-serif font-bold text-[#556B2F] mb-3 bg-gradient-to-r from-[#556B2F] to-[#6B8E23] bg-clip-text text-transparent">
+                  {t.cart.title}
+                </h1>
+                <p className="text-[#556B2F]/60 text-lg">{t.cart.subtitle}</p>
+                
+                {/* Debug Info - Remove in production */}
+                <div className="mt-4 flex items-center justify-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowDebug(!showDebug)}
+                    className="text-xs border-[#556B2F]/20"
+                  >
+                    {showDebug ? 'Hide' : 'Show'} Debug Info
+                  </Button>
+                </div>
+                
+                {showDebug && (
+                  <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-left max-w-2xl mx-auto text-xs">
+                    <p className="font-semibold mb-2">Cart Debug Information:</p>
+                    <p><strong>Items Count:</strong> {items.length}</p>
+                    <p><strong>Total Items (quantity):</strong> {totalItems}</p>
+                    <p><strong>Subtotal:</strong> {subtotal.toFixed(2)} MAD</p>
+                    <p><strong>Items in Cart:</strong></p>
+                    <pre className="mt-2 p-2 bg-white rounded overflow-auto max-h-40 text-[10px]">
+                      {JSON.stringify(items, null, 2)}
+                    </pre>
+                    {typeof window !== 'undefined' && (
+                      <p className="mt-2"><strong>LocalStorage:</strong> {localStorage.getItem('silea_cart') || 'Empty'}</p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {items.length === 0 ? (
-                <Card className="bg-white border-[#556B2F]/10 p-12 text-center max-w-lg mx-auto">
-                  <CardContent className="p-0">
-                    <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#556B2F]/10 to-[#D6A64F]/10 flex items-center justify-center mx-auto mb-6">
-                      <ShoppingBag className="w-12 h-12 text-[#556B2F]/40" />
+                <Card className="bg-white/90 backdrop-blur-md border-[#556B2F]/20 p-12 text-center max-w-lg mx-auto shadow-2xl animate-in fade-in zoom-in-95 duration-500">
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#556B2F]/5 to-[#D6A64F]/5 rounded-lg" />
+                  <CardContent className="p-0 relative z-10">
+                    <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-[#556B2F]/20 to-[#D6A64F]/20 flex items-center justify-center mx-auto mb-6 animate-pulse">
+                      <ShoppingBag className="w-14 h-14 text-[#556B2F]/60" />
                     </div>
-                    <h2 className="font-serif text-2xl font-bold text-[#556B2F] mb-2">Your cart is empty</h2>
-                    <p className="text-[#556B2F]/60 mb-8">
-                      Discover our premium Moroccan products and add them to your cart.
+                    <h2 className="font-serif text-3xl font-bold text-[#556B2F] mb-3">{t.cart.empty.title}</h2>
+                    <p className="text-[#556B2F]/70 mb-8 text-lg">
+                      {t.cart.empty.description}
                     </p>
                     <Link href="/category/honey">
-                      <Button className="bg-[#556B2F] hover:bg-[#556B2F]/90 shadow-lg shadow-[#556B2F]/25">
-                        <Sparkles className="mr-2 w-4 h-4" />
-                        Start Shopping
+                      <Button className="bg-gradient-to-r from-[#556B2F] to-[#6B8E23] hover:from-[#4A5F29] hover:to-[#5F7D1F] shadow-lg shadow-[#556B2F]/25 text-white h-12 px-8 text-base transition-all duration-300 hover:scale-105">
+                        <Sparkles className="mr-2 w-5 h-5" />
+                        {t.cart.empty.startShopping}
                       </Button>
                     </Link>
                   </CardContent>
                 </Card>
               ) : (
                 <div className="grid lg:grid-cols-3 gap-8">
-                  {/* Cart Items */}
-                  <div className="lg:col-span-2 space-y-4">
-                    {items.map((item, index) => (
-                      <Card
-                        key={`${item.product.id}-${item.size.code}`}
-                        className="bg-white/80 backdrop-blur border-[#556B2F]/10/50 overflow-hidden hover:shadow-lg transition-all duration-300 opacity-0 animate-in fade-in slide-in-from-left-4 fill-mode-forwards"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                      >
-                        <CardContent className="p-0">
-                          <div className="flex">
+                  {/* Order Summary - Now on LEFT */}
+                  <div className="lg:col-span-1 lg:order-1">
+                    <Card className="bg-white/95 backdrop-blur-md border-[#556B2F]/20 sticky top-28 overflow-hidden shadow-2xl animate-in fade-in slide-in-from-left-4 duration-700 delay-300">
+                      <div className="h-2 bg-gradient-to-r from-[#556B2F] via-[#D6A64F] to-[#556B2F] relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" style={{ animation: 'shimmer 3s infinite' }} />
+                      </div>
+                      <CardHeader className="pb-4 bg-gradient-to-br from-[#556B2F]/5 to-[#D6A64F]/5">
+                        <CardTitle className="font-serif text-2xl text-[#556B2F] flex items-center gap-2">
+                          <ShoppingBag className="w-5 h-5" />
+                          {t.cart.orderSummary}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-5 p-6">
+                        <div className="flex justify-between text-sm py-2 border-b border-[#556B2F]/10">
+                          <span className="text-[#556B2F]/70 font-medium">{t.common.subtotal} ({totalItems} {totalItems === 1 ? t.cart.item : t.cart.items})</span>
+                          <span className="font-semibold text-[#556B2F]">{subtotal.toFixed(2)} MAD</span>
+                        </div>
+                        
+                        <div className="flex justify-between text-sm py-2 border-b border-[#556B2F]/10">
+                          <span className="text-[#556B2F]/70 font-medium">{t.common.shipping}</span>
+                          <span className="font-semibold text-[#556B2F] flex items-center gap-1.5">
+                            <Gift className="w-4 h-4 text-[#D6A64F]" />
+                            <span className="text-[#D6A64F]">{t.common.free}</span>
+                          </span>
+                        </div>
+                        
+                        <Separator className="bg-gradient-to-r from-transparent via-[#556B2F]/20 to-transparent" />
+                        
+                        <div className="flex justify-between items-center pt-2">
+                          <span className="text-xl font-bold text-[#556B2F]">{t.common.total}</span>
+                          <span className="text-3xl font-serif font-bold bg-gradient-to-r from-[#D6A64F] to-[#E8B960] bg-clip-text text-transparent">{total.toFixed(2)} MAD</span>
+                        </div>
+
+                        {/* Trust Badges */}
+                        <div className="grid grid-cols-2 gap-2 pt-2">
+                          <div className="flex items-center gap-2 p-2 rounded-lg bg-[#FAF7F0]">
+                            <Shield className="w-4 h-4 text-[#556B2F]" />
+                            <span className="text-xs text-[#556B2F]/80">{t.common.secure}</span>
+                          </div>
+                          <div className="flex items-center gap-2 p-2 rounded-lg bg-[#FAF7F0]">
+                            <Truck className="w-4 h-4 text-[#556B2F]" />
+                            <span className="text-xs text-[#556B2F]/80">{t.common.fastDelivery}</span>
+                          </div>
+                        </div>
+                        
+                        <Button
+                          className="w-full bg-gradient-to-r from-[#556B2F] to-[#6B8E23] hover:from-[#4A5F29] hover:to-[#5F7D1F] shadow-lg shadow-[#556B2F]/30 h-14 text-base font-semibold transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+                          onClick={() => setStep("info")}
+                        >
+                          {t.cart.proceedToCheckout}
+                          <ArrowRight className="ml-2 w-5 h-5" />
+                        </Button>
+                        
+                        <Link href="/" className="block">
+                          <Button variant="ghost" className="w-full text-[#556B2F]/80 hover:text-[#556B2F]">
+                            <ChevronLeft className="mr-2 w-4 h-4" />
+                            {t.cart.continueShopping}
+                          </Button>
+                        </Link>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Cart Items - Now on RIGHT */}
+                  <div className="lg:col-span-2 lg:order-2 space-y-4">
+                    {items.length === 0 ? (
+                      <div className="text-center py-12">
+                        <p className="text-[#556B2F]/60">No items in cart</p>
+                      </div>
+                    ) : (
+                      items.map((item, index) => {
+                        console.log('Rendering cart item:', item.product.name, item.size.displayName, index)
+                        return (
+                          <Card
+                            key={`${item.product.id}-${item.size.code}`}
+                            className="bg-white/90 backdrop-blur-md border-2 border-[#556B2F]/30 overflow-hidden hover:shadow-2xl transition-all duration-500 group"
+                            style={{ 
+                              animation: `fadeInSlide 0.6s ease-out ${index * 0.1}s forwards`,
+                            }}
+                          >
+                        <CardContent className="p-0 relative">
+                          <div className="absolute inset-0 bg-gradient-to-r from-[#556B2F]/5 via-transparent to-[#D6A64F]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                          <div className="flex relative z-10">
                             {/* Product Image */}
-                            <Link href={`/product/${item.product.id}`} className="flex-shrink-0">
-                              <div className="w-32 h-32 sm:w-40 sm:h-40 overflow-hidden bg-gradient-to-br from-[#FAF7F0] to-[#D6A64F]/5">
+                            <Link href={`/product/${item.product.id}`} className="flex-shrink-0 group/image">
+                              <div className="w-32 h-32 sm:w-40 sm:h-40 overflow-hidden bg-gradient-to-br from-[#FAF7F0] to-[#D6A64F]/10 relative">
+                                <div className="absolute inset-0 bg-gradient-to-br from-[#556B2F]/5 to-transparent opacity-0 group-hover/image:opacity-100 transition-opacity duration-300" />
                                 <img
                                   src={filesApi.getImageUrl(item.product.imageUrl) || "/placeholder.svg"}
                                   alt={item.product.name}
-                                  className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+                                  className="w-full h-full object-cover transition-transform duration-700 group-hover/image:scale-125"
                                 />
                               </div>
                             </Link>
@@ -272,7 +417,7 @@ export default function CartPage() {
                                     </Badge>
                                   <Link href={`/product/${item.product.id}`}>
                                       <h3 className="font-serif text-lg font-semibold text-[#556B2F] hover:text-[#556B2F] transition-colors line-clamp-1">
-                                      {item.product.name}
+                                      {language === 'ar' && item.product.nameAr ? item.product.nameAr : item.product.name}
                                     </h3>
                                   </Link>
                                     <p className="text-sm text-[#556B2F]/60 mt-0.5">{item.size.displayName}</p>
@@ -289,20 +434,20 @@ export default function CartPage() {
 
                               <div className="flex items-center justify-between mt-4">
                                 {/* Quantity Controls */}
-                                <div className="flex items-center bg-[#556B2F]/10 rounded-xl overflow-hidden">
+                                <div className="flex items-center bg-gradient-to-r from-[#556B2F]/10 to-[#556B2F]/5 rounded-xl overflow-hidden border border-[#556B2F]/10">
                                   <button
                                     onClick={() => updateQuantity(item.product.id, item.size.code, item.quantity - 1)}
-                                    className="px-3 py-2 hover:bg-[#556B2F]/20 transition-colors disabled:opacity-50"
+                                    className="px-3 py-2 hover:bg-[#556B2F]/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
                                     disabled={item.quantity <= 1}
                                   >
                                     <Minus className="w-4 h-4 text-[#556B2F]/80" />
                                   </button>
-                                  <span className="px-4 py-2 font-semibold text-[#556B2F] min-w-[48px] text-center">
+                                  <span className="px-4 py-2 font-semibold text-[#556B2F] min-w-[48px] text-center bg-white/50">
                                     {item.quantity}
                                   </span>
                                   <button
                                     onClick={() => updateQuantity(item.product.id, item.size.code, item.quantity + 1)}
-                                    className="px-3 py-2 hover:bg-[#556B2F]/20 transition-colors"
+                                    className="px-3 py-2 hover:bg-[#556B2F]/20 transition-all duration-200 active:scale-95"
                                   >
                                     <Plus className="w-4 h-4 text-[#556B2F]/80" />
                                   </button>
@@ -310,8 +455,8 @@ export default function CartPage() {
                                 
                                 {/* Price */}
                                 <div className="text-right">
-                                  <p className="text-xs text-[#556B2F]/40">{item.unitPrice.toFixed(2)} MAD each</p>
-                                  <p className="text-xl font-serif font-bold text-[#D6A64F]">
+                                  <p className="text-xs text-[#556B2F]/50 mb-1">{item.unitPrice.toFixed(2)} MAD each</p>
+                                  <p className="text-2xl font-serif font-bold bg-gradient-to-r from-[#D6A64F] to-[#E8B960] bg-clip-text text-transparent">
                                   {(item.unitPrice * item.quantity).toFixed(2)} MAD
                                   </p>
                                 </div>
@@ -320,78 +465,9 @@ export default function CartPage() {
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
-                  </div>
-
-                  {/* Order Summary */}
-                  <div className="lg:col-span-1">
-                    <Card className="bg-white/80 backdrop-blur border-[#556B2F]/10/50 sticky top-28 overflow-hidden">
-                      <div className="h-1.5 bg-gradient-to-r from-[#556B2F] via-[#D6A64F] to-[#556B2F]" />
-                      <CardHeader className="pb-4">
-                        <CardTitle className="font-serif text-xl text-[#556B2F]">Order Summary</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-[#556B2F]/60">Subtotal ({totalItems} items)</span>
-                          <span className="font-medium text-[#556B2F]">{subtotal.toFixed(2)} MAD</span>
-                        </div>
-                        
-                        <div className="flex justify-between text-sm">
-                          <span className="text-[#556B2F]/60">Shipping</span>
-                            {shipping === 0 ? (
-                            <span className="font-medium text-[#556B2F] flex items-center gap-1">
-                              <Gift className="w-3 h-3" />
-                              Free
-                            </span>
-                            ) : (
-                            <span className="font-medium text-[#556B2F]">{shipping.toFixed(2)} MAD</span>
-                            )}
-                        </div>
-                        
-                        {shipping > 0 && (
-                          <div className="p-3 rounded-xl bg-[#D6A64F]/5 border border-[#D6A64F]/10">
-                            <p className="text-xs text-[#D6A64F] flex items-center gap-2">
-                              <Truck className="w-4 h-4" />
-                              Add {(200 - subtotal).toFixed(2)} MAD more for free shipping!
-                            </p>
-                          </div>
-                        )}
-                        
-                        <Separator />
-                        
-                        <div className="flex justify-between items-center">
-                          <span className="text-lg font-semibold text-[#556B2F]">Total</span>
-                          <span className="text-2xl font-serif font-bold text-[#D6A64F]">{total.toFixed(2)} MAD</span>
-                        </div>
-
-                        {/* Trust Badges */}
-                        <div className="grid grid-cols-2 gap-2 pt-2">
-                          <div className="flex items-center gap-2 p-2 rounded-lg bg-[#FAF7F0]">
-                            <Shield className="w-4 h-4 text-[#556B2F]" />
-                            <span className="text-xs text-[#556B2F]/80">Secure</span>
-                          </div>
-                          <div className="flex items-center gap-2 p-2 rounded-lg bg-[#FAF7F0]">
-                            <Truck className="w-4 h-4 text-[#556B2F]" />
-                            <span className="text-xs text-[#556B2F]/80">Fast Delivery</span>
-                          </div>
-                        </div>
-                        
-                        <Button
-                          className="w-full bg-[#556B2F] hover:bg-[#556B2F]/90 shadow-lg shadow-[#556B2F]/25 h-12 text-base"
-                          onClick={() => setStep("info")}
-                        >
-                          Proceed to Checkout
-                          <ArrowRight className="ml-2 w-4 h-4" />
-                        </Button>
-                        
-                        <Link href="/" className="block">
-                          <Button variant="ghost" className="w-full text-[#556B2F]/80 hover:text-[#556B2F]">
-                            <ChevronLeft className="mr-2 w-4 h-4" />
-                            Continue Shopping
-                          </Button>
-                        </Link>
-                      </CardContent>
-                    </Card>
+                        )
+                      })
+                    )}
                   </div>
                 </div>
               )}
@@ -402,8 +478,8 @@ export default function CartPage() {
           {step === "info" && (
             <div className="max-w-2xl mx-auto">
               <div className="text-center mb-10">
-                <h1 className="text-4xl md:text-5xl font-serif font-bold text-[#556B2F] mb-3">Shipping Details</h1>
-                <p className="text-[#556B2F]/60">Where should we deliver your order?</p>
+                <h1 className="text-4xl md:text-5xl font-serif font-bold text-[#556B2F] mb-3">{t.cart.shippingDetails.title}</h1>
+                <p className="text-[#556B2F]/60">{t.cart.shippingDetails.subtitle}</p>
               </div>
 
               <Card className="bg-white/80 backdrop-blur border-[#556B2F]/10/50 overflow-hidden">
@@ -415,12 +491,12 @@ export default function CartPage() {
                       <div className="w-8 h-8 rounded-lg bg-[#556B2F]/10 flex items-center justify-center">
                         <span className="text-[#556B2F] font-bold text-sm">1</span>
                       </div>
-                      Personal Information
+                      {t.cart.shippingDetails.personalInfo}
                     </h3>
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="customerName" className="text-[#556B2F] font-medium">
-                          Full Name <span className="text-red-500">*</span>
+                          {t.cart.shippingDetails.fullName} <span className="text-red-500">{t.cart.labels.required}</span>
                         </Label>
                       <Input
                         id="customerName"
@@ -428,7 +504,7 @@ export default function CartPage() {
                         value={formData.customerName}
                         onChange={handleInputChange}
                           className={`bg-white border-[#556B2F]/10 h-12 ${errors.customerName ? 'border-red-500 focus:ring-red-500' : ''}`}
-                          placeholder="Enter your full name"
+                          placeholder={t.cart.placeholders.fullName}
                         />
                         {errors.customerName && (
                           <p className="text-xs text-red-500 flex items-center gap-1">
@@ -439,7 +515,7 @@ export default function CartPage() {
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="customerPhone" className="text-[#556B2F] font-medium">
-                          Phone Number <span className="text-red-500">*</span>
+                          {t.cart.shippingDetails.phoneNumber} <span className="text-red-500">{t.cart.labels.required}</span>
                         </Label>
                       <Input
                         id="customerPhone"
@@ -447,7 +523,7 @@ export default function CartPage() {
                         value={formData.customerPhone}
                         onChange={handleInputChange}
                           className={`bg-white border-[#556B2F]/10 h-12 ${errors.customerPhone ? 'border-red-500 focus:ring-red-500' : ''}`}
-                        placeholder="+212 6XX XXX XXX"
+                        placeholder={t.cart.placeholders.phone}
                         />
                         {errors.customerPhone && (
                           <p className="text-xs text-red-500 flex items-center gap-1">
@@ -461,7 +537,7 @@ export default function CartPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="customerEmail" className="text-[#556B2F] font-medium">
-                      Email Address <span className="text-red-500">*</span>
+                      {t.cart.shippingDetails.emailAddress} <span className="text-red-500">{t.cart.labels.required}</span>
                     </Label>
                     <Input
                       id="customerEmail"
@@ -470,7 +546,7 @@ export default function CartPage() {
                       value={formData.customerEmail}
                       onChange={handleInputChange}
                       className={`bg-white border-[#556B2F]/10 h-12 ${errors.customerEmail ? 'border-red-500 focus:ring-red-500' : ''}`}
-                      placeholder="your.email@example.com"
+                      placeholder={t.cart.placeholders.email}
                     />
                     {errors.customerEmail && (
                       <p className="text-xs text-red-500 flex items-center gap-1">
@@ -478,7 +554,7 @@ export default function CartPage() {
                         {errors.customerEmail}
                       </p>
                     )}
-                    <p className="text-xs text-[#556B2F]/40">We'll send order confirmation and tracking updates to this email</p>
+                    <p className="text-xs text-[#556B2F]/40">{t.cart.shippingDetails.emailHint}</p>
                   </div>
 
                   <Separator />
@@ -489,12 +565,12 @@ export default function CartPage() {
                       <div className="w-8 h-8 rounded-lg bg-[#556B2F]/10 flex items-center justify-center">
                         <span className="text-[#556B2F] font-bold text-sm">2</span>
                       </div>
-                      Shipping Address
+                      {t.cart.shippingDetails.shippingAddress}
                     </h3>
                     <div className="space-y-4">
                   <div className="space-y-2">
                         <Label htmlFor="shippingAddress" className="text-[#556B2F] font-medium">
-                          Street Address <span className="text-red-500">*</span>
+                          {t.cart.shippingDetails.streetAddress} <span className="text-red-500">{t.cart.labels.required}</span>
                         </Label>
                     <Textarea
                       id="shippingAddress"
@@ -502,7 +578,7 @@ export default function CartPage() {
                       value={formData.shippingAddress}
                       onChange={handleInputChange}
                           className={`bg-white border-[#556B2F]/10 min-h-[80px] ${errors.shippingAddress ? 'border-red-500 focus:ring-red-500' : ''}`}
-                          placeholder="Street name, building number, apartment..."
+                          placeholder={t.cart.placeholders.streetAddress}
                         />
                         {errors.shippingAddress && (
                           <p className="text-xs text-red-500 flex items-center gap-1">
@@ -512,14 +588,14 @@ export default function CartPage() {
                         )}
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="city" className="text-[#556B2F] font-medium">City</Label>
+                        <Label htmlFor="city" className="text-[#556B2F] font-medium">{t.cart.shippingDetails.city}</Label>
                         <Input
                           id="city"
                           name="city"
                           value={formData.city}
                           onChange={handleInputChange}
                           className="bg-white border-[#556B2F]/10 h-12"
-                          placeholder="e.g., Casablanca, Rabat, Marrakech..."
+                          placeholder={t.cart.placeholders.city}
                         />
                       </div>
                     </div>
@@ -533,8 +609,8 @@ export default function CartPage() {
                       <div className="w-8 h-8 rounded-lg bg-[#556B2F]/10 flex items-center justify-center">
                         <span className="text-[#556B2F]/80 font-bold text-sm">3</span>
                       </div>
-                      Additional Notes
-                      <Badge variant="secondary" className="text-xs">Optional</Badge>
+                      {t.cart.shippingDetails.additionalNotes}
+                      <Badge variant="secondary" className="text-xs">{t.cart.shippingDetails.optional}</Badge>
                     </h3>
                     <Textarea
                       id="notes"
@@ -542,25 +618,25 @@ export default function CartPage() {
                       value={formData.notes}
                       onChange={handleInputChange}
                       className="bg-white border-[#556B2F]/10"
-                      placeholder="Any special instructions for delivery? (e.g., ring doorbell, leave at door...)"
+                      placeholder={t.cart.shippingDetails.notesPlaceholder}
                     />
                   </div>
 
                   {/* Order Summary Mini */}
                   <div className="p-4 rounded-xl bg-gradient-to-br from-[#FAF7F0] to-[#D6A64F]/5/50 border border-[#556B2F]/5">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-[#556B2F]/80 text-sm">Items ({totalItems})</span>
+                      <span className="text-[#556B2F]/80 text-sm">{t.cart.items} ({totalItems})</span>
                       <span className="text-[#556B2F] font-medium">{subtotal.toFixed(2)} MAD</span>
                     </div>
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-[#556B2F]/80 text-sm">Shipping</span>
+                      <span className="text-[#556B2F]/80 text-sm">{t.common.shipping}</span>
                       <span className={shipping === 0 ? "text-[#556B2F] font-medium" : "text-[#556B2F] font-medium"}>
-                        {shipping === 0 ? "Free" : `${shipping.toFixed(2)} MAD`}
+                        {shipping === 0 ? t.common.free : `${shipping.toFixed(2)} MAD`}
                       </span>
                     </div>
                     <Separator className="my-3" />
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-[#556B2F]">Total</span>
+                      <span className="font-semibold text-[#556B2F]">{t.common.total}</span>
                       <span className="text-xl font-serif font-bold text-[#D6A64F]">{total.toFixed(2)} MAD</span>
                     </div>
                   </div>
@@ -572,13 +648,13 @@ export default function CartPage() {
                       onClick={() => setStep("cart")}
                     >
                       <ChevronLeft className="mr-2 w-4 h-4" />
-                      Back
+                      {t.common.back}
                     </Button>
                     <Button
                       className="flex-1 bg-[#556B2F] hover:bg-[#556B2F]/90 shadow-lg shadow-[#556B2F]/25 h-12"
                       onClick={handleContinueToPayment}
                     >
-                      Continue
+                      {t.common.continue}
                       <ArrowRight className="ml-2 w-4 h-4" />
                     </Button>
                   </div>
@@ -591,8 +667,8 @@ export default function CartPage() {
           {step === "payment" && (
             <div className="max-w-2xl mx-auto">
               <div className="text-center mb-10">
-                <h1 className="text-4xl md:text-5xl font-serif font-bold text-[#556B2F] mb-3">Payment</h1>
-                <p className="text-[#556B2F]/60">Select your preferred payment method</p>
+                <h1 className="text-4xl md:text-5xl font-serif font-bold text-[#556B2F] mb-3">{t.cart.payment.title}</h1>
+                <p className="text-[#556B2F]/60">{t.cart.payment.subtitle}</p>
               </div>
 
               <Card className="bg-white/80 backdrop-blur border-[#556B2F]/10/50 overflow-hidden">
@@ -602,7 +678,7 @@ export default function CartPage() {
                         <div>
                     <h3 className="font-semibold text-[#556B2F] mb-4 flex items-center gap-2">
                       <CreditCard className="w-5 h-5 text-[#556B2F]" />
-                      Payment Method
+                      {t.cart.payment.method}
                     </h3>
                     <div className="space-y-3">
                       {/* Cash on Delivery - Selected */}
@@ -612,10 +688,10 @@ export default function CartPage() {
                           <Truck className="w-6 h-6 text-[#556B2F]" />
                         </div>
                         <div className="flex-1">
-                          <p className="font-semibold text-[#556B2F]">Cash on Delivery</p>
-                          <p className="text-sm text-[#556B2F]/60">Pay when you receive your order</p>
+                          <p className="font-semibold text-[#556B2F]">{t.cart.payment.cashOnDelivery}</p>
+                          <p className="text-sm text-[#556B2F]/60">{t.cart.payment.cashOnDeliveryDesc}</p>
                         </div>
-                        <Badge className="bg-[#556B2F]/10 text-[#556B2F] border-0">Recommended</Badge>
+                        <Badge className="bg-[#556B2F]/10 text-[#556B2F] border-0">{t.cart.payment.recommended}</Badge>
                       </label>
                       
                       {/* Bank Transfer - Disabled */}
@@ -626,12 +702,12 @@ export default function CartPage() {
                             <CreditCard className="w-6 h-6 text-[#556B2F]/40" />
                           </div>
                           <div className="flex-1">
-                            <p className="font-semibold text-[#556B2F]/60">Bank Transfer</p>
-                            <p className="text-sm text-[#556B2F]/40">Pay via bank transfer</p>
+                            <p className="font-semibold text-[#556B2F]/60">{t.cart.payment.bankTransfer}</p>
+                            <p className="text-sm text-[#556B2F]/40">{t.cart.payment.bankTransferDesc}</p>
                           </div>
                         </div>
                         <div className="absolute top-1/2 right-4 -translate-y-1/2">
-                          <Badge className="bg-[#D6A64F]/10 text-[#D6A64F] border-0">Coming Soon</Badge>
+                          <Badge className="bg-[#D6A64F]/10 text-[#D6A64F] border-0">{t.cart.payment.comingSoon}</Badge>
                         </div>
                       </div>
                     </div>
@@ -643,7 +719,7 @@ export default function CartPage() {
                   <div>
                     <h3 className="font-semibold text-[#556B2F] mb-4 flex items-center gap-2">
                       <Package className="w-5 h-5 text-[#556B2F]" />
-                      Order Review
+                      {t.cart.payment.orderReview}
                     </h3>
                     <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2">
                       {items.map((item) => (
@@ -656,7 +732,7 @@ export default function CartPage() {
                             />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-[#556B2F] truncate">{item.product.name}</p>
+                            <p className="font-medium text-[#556B2F] truncate">{language === 'ar' && item.product.nameAr ? item.product.nameAr : item.product.name}</p>
                             <p className="text-xs text-[#556B2F]/60">{item.size.displayName} × {item.quantity}</p>
                           </div>
                           <p className="font-semibold text-[#D6A64F]">{(item.unitPrice * item.quantity).toFixed(2)} MAD</p>
@@ -671,7 +747,7 @@ export default function CartPage() {
                   <div>
                     <h3 className="font-semibold text-[#556B2F] mb-4 flex items-center gap-2">
                       <MapPin className="w-5 h-5 text-[#556B2F]" />
-                      Delivery Details
+                      {t.cart.payment.deliveryDetails}
                     </h3>
                     <div className="p-4 rounded-xl bg-[#FAF7F0] space-y-2">
                       <p className="font-medium text-[#556B2F]">{formData.customerName}</p>
@@ -684,18 +760,18 @@ export default function CartPage() {
                   {/* Order Total */}
                   <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-[#D6A64F]/5 border border-[#556B2F]/10">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[#556B2F]/80">Subtotal</span>
+                      <span className="text-[#556B2F]/80">{t.common.subtotal}</span>
                       <span className="text-[#556B2F]">{subtotal.toFixed(2)} MAD</span>
                     </div>
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-[#556B2F]/80">Shipping</span>
+                      <span className="text-[#556B2F]/80">{t.common.shipping}</span>
                       <span className={shipping === 0 ? "text-[#556B2F]" : "text-[#556B2F]"}>
-                        {shipping === 0 ? "Free" : `${shipping.toFixed(2)} MAD`}
+                        {shipping === 0 ? t.common.free : `${shipping.toFixed(2)} MAD`}
                       </span>
                     </div>
                     <Separator className="my-3" />
                     <div className="flex items-center justify-between">
-                      <span className="text-lg font-semibold text-[#556B2F]">Total to Pay</span>
+                      <span className="text-lg font-semibold text-[#556B2F]">{t.cart.success.totalToPay}</span>
                       <span className="text-2xl font-serif font-bold text-[#D6A64F]">{total.toFixed(2)} MAD</span>
                     </div>
                   </div>
@@ -704,8 +780,8 @@ export default function CartPage() {
                   <div className="flex items-center gap-3 p-4 rounded-xl bg-blue-50 border border-blue-100">
                     <Calendar className="w-5 h-5 text-blue-600" />
                     <div>
-                      <p className="font-medium text-blue-800">Estimated Delivery</p>
-                      <p className="text-sm text-blue-600">3-5 business days</p>
+                      <p className="font-medium text-blue-800">{t.cart.payment.estimatedDelivery}</p>
+                      <p className="text-sm text-blue-600">3-5 {t.cart.payment.days}</p>
                     </div>
                   </div>
 
@@ -716,7 +792,7 @@ export default function CartPage() {
                       onClick={() => setStep("info")}
                     >
                       <ChevronLeft className="mr-2 w-4 h-4" />
-                      Back
+                      {t.common.back}
                     </Button>
                     <Button
                       className="flex-1 bg-[#556B2F] hover:bg-[#556B2F]/90 shadow-lg shadow-[#556B2F]/25 h-12"
@@ -726,12 +802,12 @@ export default function CartPage() {
                       {loading ? (
                         <>
                           <Clock className="mr-2 w-4 h-4 animate-spin" />
-                          Processing...
+                          {t.cart.payment.processing}
                         </>
                       ) : (
                         <>
                           <Check className="mr-2 w-4 h-4" />
-                          Place Order
+                          {t.cart.payment.placeOrder}
                         </>
                       )}
                     </Button>
@@ -740,7 +816,7 @@ export default function CartPage() {
                   {/* Security Note */}
                   <div className="flex items-center justify-center gap-2 text-xs text-[#556B2F]/40">
                     <Shield className="w-4 h-4" />
-                    Your information is secure and encrypted
+                    {t.cart.payment.securityNote}
                   </div>
                 </CardContent>
               </Card>
@@ -755,10 +831,10 @@ export default function CartPage() {
               </div>
               
               <h1 className="text-4xl md:text-5xl font-serif font-bold text-[#556B2F] mb-4">
-                Thank You!
+                {t.cart.success.thankYou}
               </h1>
               <p className="text-xl text-[#556B2F]/80 mb-8">
-                Your order has been placed successfully
+                {t.cart.success.orderPlaced}
               </p>
               
               {/* Order Details Card */}
@@ -766,7 +842,7 @@ export default function CartPage() {
                 <div className="h-1.5 bg-gradient-to-r from-[#556B2F] via-[#D6A64F] to-[#556B2F]" />
                 <CardContent className="p-6 space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-[#556B2F]/60">Order Number</span>
+                    <span className="text-[#556B2F]/60">{t.cart.success.orderNumber}</span>
                     <div className="flex items-center gap-2">
                       <span className="font-mono font-bold text-[#556B2F]">{orderResult.orderNumber}</span>
                       <button 
@@ -781,7 +857,7 @@ export default function CartPage() {
                   <Separator />
                   
                   <div className="flex items-center justify-between">
-                    <span className="text-[#556B2F]/60">Tracking Code</span>
+                    <span className="text-[#556B2F]/60">{t.cart.success.trackingCode}</span>
                     <div className="flex items-center gap-2">
                       <span className="font-mono font-bold text-[#556B2F]">{orderResult.trackingCode}</span>
                       <button 
@@ -796,7 +872,7 @@ export default function CartPage() {
                   <Separator />
                   
                   <div className="flex items-center justify-between">
-                    <span className="text-[#556B2F]/60">Total Paid</span>
+                    <span className="text-[#556B2F]/60">{t.cart.success.totalToPay}</span>
                     <span className="text-xl font-serif font-bold text-[#D6A64F]">
                       {typeof orderResult.total === 'number' ? orderResult.total.toFixed(2) : total.toFixed(2)} MAD
                     </span>
@@ -805,7 +881,7 @@ export default function CartPage() {
                   <Separator />
                   
                   <div className="flex items-center justify-between">
-                    <span className="text-[#556B2F]/60">Est. Delivery</span>
+                    <span className="text-[#556B2F]/60">{t.cart.success.estimatedDelivery}</span>
                     <span className="font-medium text-[#556B2F]">
                       {orderResult.estimatedDelivery 
                         ? new Date(orderResult.estimatedDelivery).toLocaleDateString("en-US", {
@@ -813,7 +889,7 @@ export default function CartPage() {
                             month: "short",
                             day: "numeric",
                           })
-                        : "3-5 business days"
+                        : `3-5 ${t.cart.payment.days}`
                       }
                     </span>
                   </div>
@@ -822,9 +898,9 @@ export default function CartPage() {
 
               <div className="p-4 rounded-xl bg-[#556B2F]/5 border border-[#556B2F]/10 mb-8">
                 <p className="text-sm text-[#556B2F]">
-                  <strong>Save your tracking code:</strong> <span className="font-mono font-bold">{orderResult.trackingCode}</span>
+                  <strong>{t.cart.success.saveTrackingCode}</strong> <span className="font-mono font-bold">{orderResult.trackingCode}</span>
                   <br />
-                  <span className="text-[#556B2F]">You can use it anytime to track your order status</span>
+                  <span className="text-[#556B2F]">{t.cart.success.trackingHint}</span>
                 </p>
               </div>
               
@@ -832,12 +908,12 @@ export default function CartPage() {
                 <Link href={`/track-order?code=${orderResult.trackingCode}`}>
                   <Button className="w-full sm:w-auto bg-[#556B2F] hover:bg-[#556B2F]/90 shadow-lg shadow-[#556B2F]/25 h-12 px-8">
                     <Truck className="mr-2 w-5 h-5" />
-                    Track Order
+                    {t.cart.success.trackOrder}
                   </Button>
                 </Link>
                 <Link href="/">
                   <Button variant="outline" className="w-full sm:w-auto h-12 px-8 border-[#556B2F]/10">
-                    Continue Shopping
+                    {t.cart.success.continueShopping}
                   </Button>
                 </Link>
               </div>
@@ -853,25 +929,25 @@ export default function CartPage() {
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#556B2F] to-[#6B8E23] flex items-center justify-center mx-auto mb-4 shadow-xl shadow-[#556B2F]/30">
               <Check className="w-10 h-10 text-white" />
             </div>
-            <DialogTitle className="text-center font-serif text-2xl text-[#556B2F]">Order Confirmed!</DialogTitle>
+            <DialogTitle className="text-center font-serif text-2xl text-[#556B2F]">{t.cart.success.orderConfirmed}</DialogTitle>
             <DialogDescription asChild>
               <div className="text-center space-y-3 pt-2">
-                <span className="block text-[#556B2F]/70">Your order has been placed successfully.</span>
+                <span className="block text-[#556B2F]/70">{t.cart.success.orderPlaced}</span>
                 {orderResult && (
                   <div className="bg-white rounded-xl p-4 space-y-3 text-left border border-[#556B2F]/10">
                     <div className="flex justify-between items-center">
-                      <span className="text-[#556B2F]/60 text-sm">Order</span>
+                      <span className="text-[#556B2F]/60 text-sm">{t.cart.success.order}</span>
                       <span className="font-mono font-bold text-[#556B2F]">{orderResult.orderNumber}</span>
                     </div>
                     <Separator className="bg-[#556B2F]/10" />
                     <div className="flex justify-between items-center">
-                      <span className="text-[#556B2F]/60 text-sm">Tracking</span>
+                      <span className="text-[#556B2F]/60 text-sm">{t.cart.success.tracking}</span>
                       <span className="font-mono font-bold text-[#D6A64F]">{orderResult.trackingCode}</span>
                     </div>
                   </div>
                 )}
                 <span className="block text-sm text-[#556B2F]/60">
-                  We'll send order details and tracking updates to your email.
+                  {t.cart.success.emailConfirmation}
                 </span>
               </div>
             </DialogDescription>
@@ -882,13 +958,13 @@ export default function CartPage() {
               className="flex-1 border-[#556B2F]/20 text-[#556B2F] hover:bg-[#556B2F]/5"
               onClick={() => setShowSuccessDialog(false)}
             >
-              Close
+              {t.cart.success.close}
             </Button>
             {orderResult && (
               <Link href={`/track-order?code=${orderResult.trackingCode}`} className="flex-1">
                 <Button className="w-full bg-[#556B2F] hover:bg-[#556B2F]/90 text-white">
                   <Truck className="w-4 h-4 mr-2" />
-                  Track Order
+                  {t.cart.success.trackOrder}
                 </Button>
               </Link>
             )}

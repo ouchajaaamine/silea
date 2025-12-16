@@ -29,6 +29,12 @@ public class Product {
     @Column(columnDefinition = "TEXT")
     private String description;
     
+    @Column(name = "description_fr", columnDefinition = "TEXT")
+    private String descriptionFr;
+    
+    @Column(name = "description_ar", columnDefinition = "TEXT")
+    private String descriptionAr;
+    
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
     
@@ -113,6 +119,22 @@ public class Product {
     
     public void setDescription(String description) {
         this.description = description;
+    }
+    
+    public String getDescriptionFr() {
+        return descriptionFr;
+    }
+    
+    public void setDescriptionFr(String descriptionFr) {
+        this.descriptionFr = descriptionFr;
+    }
+    
+    public String getDescriptionAr() {
+        return descriptionAr;
+    }
+    
+    public void setDescriptionAr(String descriptionAr) {
+        this.descriptionAr = descriptionAr;
     }
     
     public BigDecimal getPrice() {

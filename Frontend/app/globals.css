@@ -174,9 +174,37 @@
     color: rgba(47, 53, 38, 0.9);
   }
 
+  /* Smooth rendering optimizations */
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Optimize for smooth transitions */
+  body {
+    overflow-x: hidden;
+  }
+
+  html[lang="ar"] body {
+    font-family: var(--font-almarai), var(--font-tajawal), "Almarai", "Tajawal", system-ui, sans-serif;
+    letter-spacing: normal;
+    direction: rtl;
+    unicode-bidi: embed;
+  }
+
   h1, h2, h3, h4, h5, h6 {
     font-family: "Cormorant Garamond", "Georgia", serif;
     @apply font-bold tracking-tight;
+  }
+
+  html[lang="ar"] h1, html[lang="ar"] h2, html[lang="ar"] h3,
+  html[lang="ar"] h4, html[lang="ar"] h5, html[lang="ar"] h6 {
+    font-family: var(--font-almarai), var(--font-tajawal), "Almarai", "Tajawal", system-ui, sans-serif;
+    font-weight: 800;
+    letter-spacing: normal;
+    font-feature-settings: normal;
+    text-rendering: optimizeSpeed;
+    unicode-bidi: embed;
   }
 }
 
@@ -219,6 +247,18 @@
       rgba(40, 40, 40, 0.7) 0%,
       rgba(30, 30, 30, 0.5) 100%
     );
+  }
+
+  .font-arabic {
+    font-family: var(--font-almarai), var(--font-tajawal), "Almarai", "Tajawal", system-ui, -apple-system, sans-serif;
+    font-weight: 700;
+    letter-spacing: normal;
+    font-feature-settings: normal;
+    text-rendering: optimizeSpeed;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    unicode-bidi: embed;
+    direction: rtl;
   }
   
   /* Glass Card Dark Variant */
@@ -527,6 +567,88 @@
   ::selection {
     background: rgba(214, 166, 79, 0.3);
     color: #2F3526;
+  }
+
+  /* Toast Animations */
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(20px) scale(0.95);
+    }
+  }
+
+  /* Shimmer Animation */
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 3s infinite;
+  }
+
+  /* Cart Item Animation */
+  @keyframes fadeInSlide {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* RTL Support */
+  [dir="rtl"] {
+    direction: rtl;
+  }
+
+  [dir="rtl"] .text-left {
+    text-align: right;
+  }
+
+  [dir="rtl"] .text-right {
+    text-align: left;
+  }
+
+  [dir="rtl"] .ml-2 {
+    margin-left: 0;
+    margin-right: 0.5rem;
+  }
+
+  [dir="rtl"] .mr-2 {
+    margin-right: 0;
+    margin-left: 0.5rem;
+  }
+
+  [dir="rtl"] .ml-4 {
+    margin-left: 0;
+    margin-right: 1rem;
+  }
+
+  [dir="rtl"] .mr-4 {
+    margin-right: 0;
+    margin-left: 1rem;
   }
 }
 

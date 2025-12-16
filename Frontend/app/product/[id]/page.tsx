@@ -5,18 +5,20 @@ import { use } from "react"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
 import Link from "next/link"
-import { Heart, Share2, ShoppingCart, ChevronRight, ChevronLeft, Star, Minus, Plus, Truck, Shield, Leaf, Check, Crown, ImageIcon } from "lucide-react"
+import { ShoppingCart, ChevronRight, ChevronLeft, Star, Minus, Plus, Truck, Shield, Leaf, Check, Crown, ImageIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { productsApi, filesApi, type Product, type ProductImage, type ProductSize, getSizesForCategory, getPriceForSize, getProductImageUrl } from "@/lib/api"
+import { productsApi, filesApi, type Product, type ProductImage, type ProductSize, getSizesForCategory, getPriceForSize, getProductImageUrl, getLocalizedDescription } from "@/lib/api"
 import { useCart } from "@/lib/cart-context"
 import { toast } from "sonner"
+import { useTranslation } from "@/lib/translation-context"
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
+  const { t, language } = useTranslation()
   const [product, setProduct] = useState<Product | null>(null)
   const [productImages, setProductImages] = useState<ProductImage[]>([])
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
@@ -147,6 +149,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       addItem(product, selectedSize, quantity)
       toast.success(`${product.name} added to cart`, {
         description: `${quantity} × ${selectedSize.displayName} = ${(currentPrice * quantity).toFixed(2)} MAD`,
+        duration: 1000,
+        className: 'animate-in slide-in-from-top-2 fade-in zoom-in-95',
       })
     }
   }
@@ -216,12 +220,12 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         <Header />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <h1 className="text-4xl font-serif font-bold mb-4">Product Not Found</h1>
+            <h1 className="text-4xl font-serif font-bold mb-4">{t.product.productNotFound}</h1>
             <p className="text-muted-foreground mb-6">
-              The product you're looking for doesn't exist or has been removed.
+              {t.product.productNotFoundDesc}
             </p>
             <Link href="/">
-              <Button className="btn-primary">Back to Home</Button>
+              <Button className="btn-primary">{t.product.backToHome}</Button>
             </Link>
           </div>
         </div>
@@ -239,14 +243,14 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Link href="/" className="hover:text-[#556B2F] transition-colors">
-              Home
+              {t.product.categoryBreadcrumb}
             </Link>
             <ChevronRight className="w-4 h-4" />
             <Link
-              href={`/category/${product.category.name.toLowerCase()}`}
+              href={`/category/${product.category.slug || product.category.name.toLowerCase()}`}
               className="hover:text-[#556B2F] transition-colors"
             >
-              {product.category.name}
+              {language === 'ar' && product.category.nameAr ? product.category.nameAr : product.category.name}
             </Link>
             <ChevronRight className="w-4 h-4" />
             <span className="text-foreground">{product.name}</span>
@@ -318,7 +322,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 {productImages.length > 0 && productImages[selectedImage]?.isPrimary && (
                   <div className="absolute top-4 left-4 bg-[#D6A64F] text-white px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 z-10">
                     <Crown className="w-3.5 h-3.5" />
-                    Primary
+                    {t.product.primary}
                   </div>
                 )}
                 
@@ -391,11 +395,11 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   {product.category.name}
                 </span>
                 {product.featured && (
-                  <Badge className="bg-[#556B2F] text-white">Featured</Badge>
+                  <Badge className="bg-[#556B2F] text-white">{t.product.featured}</Badge>
                 )}
                 {!product.available && (
                   <Badge variant="outline" className="border-red-500 text-red-500">
-                    Unavailable
+                    {t.product.unavailable}
                   </Badge>
                 )}
               </div>
@@ -413,12 +417,12 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     <Star key={i} className="w-5 h-5 fill-[#D6A64F] text-[#D6A64F]" />
                   ))}
                 </div>
-                <span className="text-sm text-muted-foreground">5.0 (24 reviews)</span>
+                <span className="text-sm text-muted-foreground">{t.product.rating}</span>
               </div>
 
               {/* Size Selection */}
               <div className="space-y-3">
-                <label className="text-sm font-medium">Select Size:</label>
+                <label className="text-sm font-medium">{t.product.selectSize}</label>
                 <div className="flex flex-wrap gap-3">
                   {availableSizes.map((size) => (
                     <button
@@ -449,14 +453,14 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     <span className="text-lg text-muted-foreground line-through">
                       {Math.round(currentPrice * 1.15)} MAD
                     </span>
-                    <Badge className="bg-[#556B2F]/10 text-[#556B2F]">Save 15%</Badge>
+                    <Badge className="bg-[#556B2F]/10 text-[#556B2F]">{t.product.savePercent}</Badge>
                   </>
                 )}
               </div>
 
               {/* Availability */}
               <p className="text-muted-foreground">
-                {selectedSize?.displayName} • {product.available ? "In Stock" : "Out of stock"}
+                {selectedSize?.displayName} • {product.available ? t.common.inStock : t.product.unavailableStatus}
               </p>
 
               {/* Quantity & Add to Cart */}
@@ -485,40 +489,28 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     disabled={!product.available || !selectedSize}
                   >
                     <ShoppingCart className="w-5 h-5 mr-2" />
-                    Add to Cart
+                    {t.common.addToCart}
                     {itemInCart > 0 && (
-                      <Badge className="ml-2 bg-white/20">{itemInCart} in cart</Badge>
+                      <Badge className="ml-2 bg-white/20">{itemInCart} {t.product.inCart}</Badge>
                     )}
                   </Button>
                 </div>
-                <Button variant="outline" className="w-full btn-secondary h-14">
-                  <Heart className="w-5 h-5 mr-2" />
-                  Add to Wishlist
-                </Button>
               </div>
 
               {/* Shipping Info */}
               <div className="grid grid-cols-3 gap-4 pt-6 border-t border-[#556B2F]/10">
                 <div className="flex flex-col items-center text-center p-3 rounded-xl bg-[#556B2F]/5">
                   <Truck className="w-5 h-5 text-[#556B2F] mb-2" />
-                  <span className="text-xs text-muted-foreground">Free Shipping</span>
+                  <span className="text-xs text-muted-foreground">{t.product.freeShipping}</span>
                 </div>
                 <div className="flex flex-col items-center text-center p-3 rounded-xl bg-[#556B2F]/5">
                   <Shield className="w-5 h-5 text-[#556B2F] mb-2" />
-                  <span className="text-xs text-muted-foreground">Secure Payment</span>
+                  <span className="text-xs text-muted-foreground">{t.product.securePayment}</span>
                 </div>
                 <div className="flex flex-col items-center text-center p-3 rounded-xl bg-[#556B2F]/5">
                   <Leaf className="w-5 h-5 text-[#556B2F] mb-2" />
-                  <span className="text-xs text-muted-foreground">100% Natural</span>
+                  <span className="text-xs text-muted-foreground">{t.product.natural}</span>
                 </div>
-              </div>
-
-              {/* Share */}
-              <div className="flex items-center gap-2 pt-4">
-                <span className="text-sm text-muted-foreground">Share:</span>
-                <Button variant="ghost" size="icon" className="hover:bg-[#556B2F]/10">
-                  <Share2 className="w-4 h-4" />
-                </Button>
               </div>
             </div>
           </div>
@@ -530,35 +522,53 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 value="description"
                 className="px-6 py-3 data-[state=active]:bg-[#556B2F] data-[state=active]:text-white rounded-lg"
               >
-                Description
+                {t.product.description}
               </TabsTrigger>
               <TabsTrigger
                 value="benefits"
                 className="px-6 py-3 data-[state=active]:bg-[#556B2F] data-[state=active]:text-white rounded-lg"
               >
-                Benefits
+                {t.product.benefits}
               </TabsTrigger>
-              <TabsTrigger
+              {/* <TabsTrigger
                 value="reviews"
                 className="px-6 py-3 data-[state=active]:bg-[#556B2F] data-[state=active]:text-white rounded-lg"
               >
-                Reviews (24)
-              </TabsTrigger>
+                {t.product.reviews} {t.product.reviewsCount}
+              </TabsTrigger> */}
             </TabsList>
 
             <TabsContent value="description" className="mt-8">
-              <Card className="glass-card p-8">
-                <CardContent className="p-0 space-y-4">
-                  <h3 className="font-serif text-2xl font-bold">About This Product</h3>
-                  <p className="text-muted-foreground leading-relaxed">{product.description}</p>
-                  <div className="grid md:grid-cols-2 gap-6 pt-6">
-                    <div className="p-4 rounded-xl bg-[#556B2F]/5">
-                      <p className="text-sm text-muted-foreground mb-1">Origin</p>
-                      <p className="font-semibold">Beni Mellal Mountains, Morocco</p>
+              <Card className="glass-card border-2 border-[#556B2F]/10 overflow-hidden">
+                <div className="bg-gradient-to-r from-[#556B2F]/10 via-[#6B8E23]/5 to-transparent p-8 border-b border-[#556B2F]/10">
+                  <h3 className="font-serif text-3xl font-bold text-[#556B2F] flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-[#556B2F]/10 flex items-center justify-center">
+                      <ImageIcon className="w-6 h-6 text-[#556B2F]" />
                     </div>
-                    <div className="p-4 rounded-xl bg-[#556B2F]/5">
-                      <p className="text-sm text-muted-foreground mb-1">Ingredients</p>
-                      <p className="font-semibold">100% Pure, No Additives</p>
+                    {t.product.aboutProduct}
+                  </h3>
+                </div>
+                <CardContent className="p-8 space-y-8">
+                  <div className="relative">
+                    <div className="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-[#D6A64F] via-[#556B2F] to-[#D6A64F] rounded-full" />
+                    <p className={`text-lg leading-relaxed pl-4 ${language === 'ar' ? 'font-arabic text-right' : ''}`} style={{ lineHeight: '2' }}>
+                      {getLocalizedDescription(product, language)}
+                    </p>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="group relative p-6 rounded-2xl bg-gradient-to-br from-[#556B2F]/10 to-[#6B8E23]/5 border border-[#556B2F]/20 hover:border-[#556B2F]/40 transition-all duration-300 hover:shadow-lg">
+                      <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#D6A64F]/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Leaf className="w-5 h-5 text-[#D6A64F]" />
+                      </div>
+                      <p className="text-xs uppercase tracking-wider text-[#556B2F] font-semibold mb-2">{t.product.origin}</p>
+                      <p className="font-bold text-lg">{t.product.benimelalMountains}</p>
+                    </div>
+                    <div className="group relative p-6 rounded-2xl bg-gradient-to-br from-[#D6A64F]/10 to-[#F4D03F]/5 border border-[#D6A64F]/20 hover:border-[#D6A64F]/40 transition-all duration-300 hover:shadow-lg">
+                      <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#556B2F]/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Shield className="w-5 h-5 text-[#556B2F]" />
+                      </div>
+                      <p className="text-xs uppercase tracking-wider text-[#D6A64F] font-semibold mb-2">{t.product.ingredients}</p>
+                      <p className="font-bold text-lg">{t.product.pureNoAdditives}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -568,7 +578,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             <TabsContent value="benefits" className="mt-8">
               <Card className="glass-card p-8">
                 <CardContent className="p-0">
-                  <h3 className="font-serif text-2xl font-bold mb-6">Health Benefits</h3>
+                  <h3 className="font-serif text-2xl font-bold mb-6">{t.product.healthBenefits}</h3>
                   <ul className="grid md:grid-cols-2 gap-4">
                     {benefits.map((benefit, i) => (
                       <li key={i} className="flex items-center gap-3">
@@ -583,7 +593,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               </Card>
             </TabsContent>
 
-            <TabsContent value="reviews" className="mt-8">
+            {/* Reviews - Will add later */}
+            {/* <TabsContent value="reviews" className="mt-8">
               <div className="space-y-4">
                 {reviews.map((review, i) => (
                   <Card key={i} className="glass-card p-6">
@@ -609,10 +620,10 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   </Card>
                 ))}
                 <Button variant="outline" className="btn-secondary w-full">
-                  View All Reviews
+                  {t.product.viewAllReviews}
                 </Button>
               </div>
-            </TabsContent>
+            </TabsContent> */}
           </Tabs>
         </div>
       </section>
@@ -621,7 +632,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       {relatedProducts.length > 0 && (
         <section className="py-16 px-4 sm:px-6 lg:px-8 premium-section">
           <div className="max-w-7xl mx-auto">
-            <h2 className="text-3xl font-serif font-bold mb-8">You Might Also Like</h2>
+            <h2 className="text-3xl font-serif font-bold mb-8">{t.product.youMightAlsoLike}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {relatedProducts.map((relatedProduct) => (
                 <Link

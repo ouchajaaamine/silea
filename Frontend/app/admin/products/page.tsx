@@ -102,6 +102,8 @@ export default function AdminProductsPage() {
     name: "",
     nameArabic: "",
     description: "",
+    descriptionFr: "",
+    descriptionAr: "",
     categoryId: "",
     imageUrl: "",
     available: true,
@@ -120,6 +122,8 @@ export default function AdminProductsPage() {
     name: "",
     nameArabic: "",
     description: "",
+    descriptionFr: "",
+    descriptionAr: "",
     categoryId: "",
     imageUrl: "",
     available: true,
@@ -320,6 +324,8 @@ export default function AdminProductsPage() {
       name: product.name,
       nameArabic: product.nameAr,
       description: product.description || "",
+      descriptionFr: product.descriptionFr || "",
+      descriptionAr: product.descriptionAr || "",
       categoryId: product.category.id.toString(),
       imageUrl: product.imageUrl || "",
       available: product.available,
@@ -391,6 +397,8 @@ export default function AdminProductsPage() {
         name: formData.name,
         nameArabic: formData.nameArabic,
         description: formData.description,
+        descriptionFr: formData.descriptionFr,
+        descriptionAr: formData.descriptionAr,
         price: basePrice,
         available: formData.available,
         categoryId: parseInt(formData.categoryId),
@@ -439,6 +447,8 @@ export default function AdminProductsPage() {
         name: editFormData.name,
         nameArabic: editFormData.nameArabic,
         description: editFormData.description,
+        descriptionFr: editFormData.descriptionFr,
+        descriptionAr: editFormData.descriptionAr,
         price: basePrice,
         available: editFormData.available,
         imageUrl: editFormData.imageUrl,
@@ -467,6 +477,8 @@ export default function AdminProductsPage() {
       name: "",
       nameArabic: "",
       description: "",
+      descriptionFr: "",
+      descriptionAr: "",
       categoryId: "",
       imageUrl: "",
       available: true,
@@ -667,12 +679,36 @@ export default function AdminProductsPage() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label>Description</Label>
+                    <Label>Description (English)</Label>
                     <Textarea 
                       className="input-glass" 
-                      placeholder="Product description..."
+                      placeholder="Product description in English..."
                       value={formData.description}
                       onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      rows={3}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Description (French)</Label>
+                    <Textarea 
+                      className="input-glass" 
+                      placeholder="Description du produit en français..."
+                      value={formData.descriptionFr}
+                      onChange={(e) => setFormData({...formData, descriptionFr: e.target.value})}
+                      rows={3}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Description (Arabic)</Label>
+                    <Textarea 
+                      className="input-glass" 
+                      placeholder="وصف المنتج بالعربية..."
+                      value={formData.descriptionAr}
+                      onChange={(e) => setFormData({...formData, descriptionAr: e.target.value})}
+                      rows={3}
+                      dir="rtl"
                     />
                   </div>
                   
@@ -1120,12 +1156,36 @@ export default function AdminProductsPage() {
             </div>
             
             <div className="space-y-2">
-              <Label>Description</Label>
+              <Label>Description (English)</Label>
               <Textarea 
                 className="input-glass" 
-                placeholder="Product description..."
+                placeholder="Product description in English..."
                 value={editFormData.description}
                 onChange={(e) => setEditFormData({...editFormData, description: e.target.value})}
+                rows={3}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Description (French)</Label>
+              <Textarea 
+                className="input-glass" 
+                placeholder="Description du produit en français..."
+                value={editFormData.descriptionFr}
+                onChange={(e) => setEditFormData({...editFormData, descriptionFr: e.target.value})}
+                rows={3}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Description (Arabic)</Label>
+              <Textarea 
+                className="input-glass" 
+                placeholder="وصف المنتج بالعربية..."
+                value={editFormData.descriptionAr}
+                onChange={(e) => setEditFormData({...editFormData, descriptionAr: e.target.value})}
+                rows={3}
+                dir="rtl"
               />
             </div>
             
