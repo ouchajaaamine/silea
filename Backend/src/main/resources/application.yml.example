@@ -1,0 +1,16 @@
+# Example application.yml — DO NOT STORE SECRETS HERE
+# Replace placeholder values and keep real secrets out of the repository.
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/silea
+    username: your_db_user
+    password: your_db_password
+
+# Example third-party keys (place real secrets in environment variables or secret manager)
+thirdparty:
+  twilio:
+    accountSid: "YOUR_TWILIO_ACCOUNT_SID"
+    authToken: "YOUR_TWILIO_AUTH_TOKEN"
