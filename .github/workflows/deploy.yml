@@ -312,11 +312,7 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          ssh -i ~/.ssh/ec2-key.pem \
-            -o StrictHostKeyChecking=no \
-            -o ServerAliveInterval=30 \
-            -o ServerAliveCountMax=10 \
-            ec2-user@${{ secrets.EC2_HOST }} << 'ENDSSH'
+          ssh -i ~/.ssh/ec2-key.pem -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -o ConnectTimeout=10 ec2-user@${{ secrets.EC2_HOST }} << 'ENDSSH'
             set -e
             
             echo "🔐 Logging into ECR..."
