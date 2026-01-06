@@ -11,8 +11,8 @@ env:
   ECR_BACKEND_REPOSITORY: silea-backend
   ECR_FRONTEND_REPOSITORY: silea-frontend
   ECS_CLUSTER: silea-cluster
-  ECS_SERVICE_BACKEND: silea-backend-service
-  ECS_SERVICE_FRONTEND: silea-frontend-service
+  ECS_SERVICE_BACKEND: silea-backend-service-new
+  ECS_SERVICE_FRONTEND: silea-frontend-service-new
   ECS_TASK_DEFINITION_BACKEND: silea-backend-task
   ECS_TASK_DEFINITION_FRONTEND: silea-frontend-task
 
