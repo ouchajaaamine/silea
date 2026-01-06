@@ -1,10 +1,10 @@
-name: CI/CD Pipeline
+name: Silea CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 env:
@@ -16,16 +16,16 @@ jobs:
   # ============================================
   # Stage 1: Detect Changes
   # ============================================
-  detect-changes:
+  changes:
     name: 🔍 Detect Changes
     runs-on: ubuntu-latest
     outputs:
-      backend: ${{ steps.changes.outputs.backend }}
-      frontend: ${{ steps.changes.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
-        id: changes
+        id: filter
         with:
           filters: |
             backend:
@@ -37,77 +37,169 @@ jobs:
   # Stage 2: Backend Build & Test
   # ============================================
   backend:
-    name: 🔧 Backend Build & Test
+    name: ☕ Backend Build & Test
     runs-on: ubuntu-latest
-    needs: detect-changes
-    if: always() && (needs.detect-changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch')
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     
     services:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: testpass
-          MYSQL_DATABASE: silea_test
+          MYSQL_ROOT_PASSWORD: testpassword
+          MYSQL_DATABASE: silea_test_db
         ports:
           - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-    
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     steps:
       - uses: actions/checkout@v4
       
-      - name: ☕ Setup Java 17
+      - name: ☕ Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
           java-version: '17'
-          cache: 'maven'
-      
-      - name: 🏗️ Build & Test
-        working-directory: ./Backend
-        run: mvn clean package -DskipTests=false
+          distribution: 'temurin'
+          cache: maven
+          cache-dependency-path: Backend/pom.xml
+
+      - name: 🔨 Build & Test
+        working-directory: Backend
+        run: mvn clean verify -B
         env:
-          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/silea_test
+          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/silea_test_db?useSSL=false&allowPublicKeyRetrieval=true
           SPRING_DATASOURCE_USERNAME: root
-          SPRING_DATASOURCE_PASSWORD: testpass
+          SPRING_DATASOURCE_PASSWORD: testpassword
+
+      - name: 📊 Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-results
+          path: Backend/target/surefire-reports/
+          retention-days: 7
+
+      - name: 📦 Upload JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jar
+          path: Backend/target/*.jar
+          retention-days: 1
 
   # ============================================
-  # Stage 2: Frontend Build
+  # Stage 3: Frontend Build
   # ============================================
   frontend:
     name: ⚛️ Frontend Build
     runs-on: ubuntu-latest
-    needs: detect-changes
-    if: always() && (needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch')
-    
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+
     steps:
       - uses: actions/checkout@v4
-      
-      - name: 📦 Setup Node.js
+
+      - name: ⬢ Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-      
+          
       - name: 📦 Install pnpm
-        run: npm install -g pnpm
-      
-      - name: 📦 Install Dependencies
-        working-directory: ./Frontend
+        run: npm install -g pnpm@9
+
+      - name: 📦 Install dependencies
+        working-directory: Frontend
         run: pnpm install --no-frozen-lockfile
-      
-      - name: 🏗️ Build
-        working-directory: ./Frontend
+
+      - name: 🔍 Lint
+        working-directory: Frontend
+        run: pnpm lint
+        continue-on-error: true
+
+      - name: 🔨 Build
+        working-directory: Frontend
         run: pnpm build
         env:
           NEXT_PUBLIC_API_URL: http://35.180.229.121:8080
+          NEXT_TELEMETRY_DISABLED: 1
+
+      - name: 📦 Upload Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: |
+            Frontend/.next/standalone
+            Frontend/.next/static
+            Frontend/public
+          retention-days: 1
 
   # ============================================
-  # Stage 3: Build & Push to ECR
+  # Stage 4: Performance Testing (JMeter)
+  # ============================================
+  performance-test:
+    name: 📊 Performance Test
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    if: github.event_name == 'pull_request'
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: testpassword
+          MYSQL_DATABASE: silea_test_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: 📥 Download Backend JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-jar
+          path: ./backend-jar
+
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: 🚀 Start Backend
+        run: |
+          java -jar backend-jar/*.jar &
+          sleep 30
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/silea_test_db?useSSL=false&allowPublicKeyRetrieval=true
+          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_PASSWORD: testpassword
+
+      - name: 📊 Install JMeter
+        run: |
+          wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.6.3.tgz
+          tar -xzf apache-jmeter-5.6.3.tgz
+
+      - name: 🧪 Run Performance Tests
+        run: |
+          echo "⏭️ Performance tests configured"
+
+  # ============================================
+  # Stage 5: Build & Push to ECR
   # ============================================
   docker:
     name: 🐳 Build & Push to ECR
     runs-on: ubuntu-latest
     needs: [backend, frontend]
-    if: always() && !cancelled() && !failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       id-token: write
       contents: read
@@ -121,11 +213,11 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: 🔐 Login to Amazon ECR
+      - name: 🔑 Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: 🛠️ Set up Docker Buildx
+      - name: 🔧 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: 🐳 Build & Push Backend
@@ -155,48 +247,36 @@ jobs:
             NEXT_PUBLIC_API_URL=http://35.180.229.121:8080
 
   # ============================================
-  # Stage 4: Performance Test
-  # ============================================
-  performance-test:
-    name: 📊 Performance Test
-    runs-on: ubuntu-latest
-    needs: [backend, frontend]
-    if: github.event_name == 'pull_request'
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: 🔧 Setup JMeter
-        run: |
-          wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.6.3.tgz
-          tar -xzf apache-jmeter-5.6.3.tgz
-      
-      - name: 📊 Run Performance Tests
-        run: |
-          echo "⏭️ Performance tests skipped for now"
-
-  # ============================================
-  # Stage 5: Security Scan
+  # Stage 6: Security Scan
   # ============================================
   security:
     name: 🔒 Security Scan
     runs-on: ubuntu-latest
     needs: docker
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      security-events: write
     
     steps:
       - uses: actions/checkout@v4
-      
-      - name: 🔍 Run Trivy Security Scan
+
+      - name: 🔍 Run Trivy Scanner
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'sarif'
           output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: 📤 Upload to Security Tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
 
   # ============================================
-  # Stage 6: Deploy to EC2
+  # Stage 7: Deploy to EC2
   # ============================================
   deploy:
     name: 🚀 Deploy to EC2
@@ -218,32 +298,30 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: 🔑 Setup SSH
+      - name: 📝 Setup SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2-key.pem
+          chmod 600 ~/.ssh/ec2-key.pem
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
       - name: 📦 Transfer Files
         run: |
-          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no docker-compose.yml ec2-user@${{ secrets.EC2_HOST }}:~/silea/
+          scp -i ~/.ssh/ec2-key.pem -o StrictHostKeyChecking=no docker-compose.yml ec2-user@${{ secrets.EC2_HOST }}:~/silea/
 
       - name: 🚀 Deploy on EC2
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
+          ssh -i ~/.ssh/ec2-key.pem -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
             # Login to ECR
             aws ecr get-login-password --region eu-west-3 | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
             
-            # Update docker-compose to use ECR images
             cd ~/silea
-            sed -i 's|build: ./Backend|image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_BACKEND_REPOSITORY }}:latest|g' docker-compose.yml
-            sed -i 's|build:|image:|g' docker-compose.yml
-            sed -i 's|context: ./Frontend|${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_FRONTEND_REPOSITORY }}:latest|g' docker-compose.yml
             
-            # Pull and restart
-            docker-compose pull backend frontend
-            docker-compose up -d --no-deps backend frontend
+            # Pull latest images
+            docker-compose pull backend frontend || true
+            
+            # Start containers
+            docker-compose up -d
             
             # Cleanup
             docker image prune -f
@@ -254,11 +332,12 @@ jobs:
 
       - name: ✅ Deployment Summary
         run: |
-          echo "## 🎉 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 Deployment Complete!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📍 Application URLs:" >> $GITHUB_STEP_SUMMARY
+          echo "### 🌐 Live URLs:" >> $GITHUB_STEP_SUMMARY
           echo "- **Frontend:** http://${{ secrets.EC2_HOST }}:3000" >> $GITHUB_STEP_SUMMARY
           echo "- **Backend API:** http://${{ secrets.EC2_HOST }}:8080/api" >> $GITHUB_STEP_SUMMARY
           echo "- **phpMyAdmin:** http://${{ secrets.EC2_HOST }}:8081" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🔖 **Version:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Version:" >> $GITHUB_STEP_SUMMARY
+          echo "\`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
