@@ -60,6 +60,20 @@ services:
     networks:
       - silea-network
 
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: silea-phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      - mysql
+    networks:
+      - silea-network
+
 volumes:
   mysql-data:
 

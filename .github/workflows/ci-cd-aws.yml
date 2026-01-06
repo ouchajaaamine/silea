@@ -313,72 +313,49 @@ jobs:
             NEXT_PUBLIC_API_URL=${{ secrets.API_URL }}
 
   # ============================================
-  # Stage 6: Deploy to AWS ECS
+  # Stage 6: Deploy to EC2
   # ============================================
   deploy:
-    name: 🚀 Deploy to AWS ECS
+    name: 🚀 Deploy to EC2
     runs-on: ubuntu-latest
     needs: docker
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment: production
-    permissions:
-      id-token: write
-      contents: read
     
     steps:
       - uses: actions/checkout@v4
 
-      - name: 🔐 Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+      - name: 📝 Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2-key.pem
+          chmod 600 ~/.ssh/ec2-key.pem
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: 🔑 Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+      - name: 📦 Transfer deployment files
+        run: |
+          scp -i ~/.ssh/ec2-key.pem docker-compose.prod.yml ec2-user@${{ secrets.EC2_HOST }}:/opt/silea/
+          scp -i ~/.ssh/ec2-key.pem nginx.conf ec2-user@${{ secrets.EC2_HOST }}:/opt/silea/
+          scp -i ~/.ssh/ec2-key.pem deploy.sh ec2-user@${{ secrets.EC2_HOST }}:/opt/silea/
 
-      - name: 📝 Fill Backend Task Definition
-        id: task-def-backend
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: .aws/backend-task-definition.json
-          container-name: silea-backend
-          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_BACKEND_REPOSITORY }}:${{ github.sha }}
-
-      - name: 🚀 Deploy Backend to ECS
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
-        with:
-          task-definition: ${{ steps.task-def-backend.outputs.task-definition }}
-          service: ${{ env.ECS_SERVICE_BACKEND }}
-          cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: true
-
-      - name: 📝 Fill Frontend Task Definition
-        id: task-def-frontend
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: .aws/frontend-task-definition.json
-          container-name: silea-frontend
-          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_FRONTEND_REPOSITORY }}:${{ github.sha }}
-
-      - name: 🚀 Deploy Frontend to ECS
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
-        with:
-          task-definition: ${{ steps.task-def-frontend.outputs.task-definition }}
-          service: ${{ env.ECS_SERVICE_FRONTEND }}
-          cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: true
+      - name: 🚀 Deploy on EC2
+        run: |
+          ssh -i ~/.ssh/ec2-key.pem ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
+            cd /opt/silea
+            chmod +x deploy.sh
+            ./deploy.sh
+          EOF
 
       - name: ✅ Deployment Summary
         run: |
           echo "## 🚀 Deployment Complete!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Deployed Services:" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Backend: \`${{ env.ECS_SERVICE_BACKEND }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Frontend: \`${{ env.ECS_SERVICE_FRONTEND }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "### 🌐 Live URLs:" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend: http://${{ secrets.EC2_HOST }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend API: http://${{ secrets.EC2_HOST }}/api" >> $GITHUB_STEP_SUMMARY
+          echo "- phpMyAdmin: http://${{ secrets.EC2_HOST }}/phpmyadmin" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Image Tags:" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Deployed Images:" >> $GITHUB_STEP_SUMMARY
           echo "- Backend: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- Frontend: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
 
