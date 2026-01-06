@@ -326,7 +326,7 @@ jobs:
             
             echo "📝 Creating docker-compose with ECR images..."
             cd ~/silea
-            cat > docker-compose.yml << 'EOF'
+            cat > docker-compose.yml << 'EOFCOMPOSE'
 version: '3.8'
 
 services:
@@ -387,7 +387,7 @@ services:
 
 volumes:
   mysql_data:
-EOF
+EOFCOMPOSE
             
             echo "🚀 Starting containers..."
             docker-compose down --remove-orphans
