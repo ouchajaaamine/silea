@@ -1,70 +1,264 @@
-name: Deploy to EC2
+name: CI/CD Pipeline
 
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
+env:
+  AWS_REGION: eu-west-3
+  ECR_BACKEND_REPOSITORY: silea-backend
+  ECR_FRONTEND_REPOSITORY: silea-frontend
+
 jobs:
+  # ============================================
+  # Stage 1: Detect Changes
+  # ============================================
+  detect-changes:
+    name: 🔍 Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.changes.outputs.backend }}
+      frontend: ${{ steps.changes.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            backend:
+              - 'Backend/**'
+            frontend:
+              - 'Frontend/**'
+
+  # ============================================
+  # Stage 2: Backend Build & Test
+  # ============================================
+  backend:
+    name: 🔧 Backend Build & Test
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: testpass
+          MYSQL_DATABASE: silea_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: ☕ Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+      
+      - name: 🏗️ Build & Test
+        working-directory: ./Backend
+        run: mvn clean package -DskipTests=false
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/silea_test
+          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_PASSWORD: testpass
+
+  # ============================================
+  # Stage 2: Frontend Build
+  # ============================================
+  frontend:
+    name: ⚛️ Frontend Build
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: 📦 Install pnpm
+        run: npm install -g pnpm
+      
+      - name: 📦 Install Dependencies
+        working-directory: ./Frontend
+        run: pnpm install --no-frozen-lockfile
+      
+      - name: 🏗️ Build
+        working-directory: ./Frontend
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_API_URL: http://35.180.229.121:8080
+
+  # ============================================
+  # Stage 3: Build & Push to ECR
+  # ============================================
+  docker:
+    name: 🐳 Build & Push to ECR
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🔐 Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🔐 Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 🛠️ Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🐳 Build & Push Backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./Backend
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_BACKEND_REPOSITORY }}:latest
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_BACKEND_REPOSITORY }}:${{ github.sha }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+      - name: 🐳 Build & Push Frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./Frontend
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_FRONTEND_REPOSITORY }}:latest
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_FRONTEND_REPOSITORY }}:${{ github.sha }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+          build-args: |
+            NEXT_PUBLIC_API_URL=http://35.180.229.121:8080
+
+  # ============================================
+  # Stage 4: Performance Test
+  # ============================================
+  performance-test:
+    name: 📊 Performance Test
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: 🔧 Setup JMeter
+        run: |
+          wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.6.3.tgz
+          tar -xzf apache-jmeter-5.6.3.tgz
+      
+      - name: 📊 Run Performance Tests
+        run: |
+          echo "⏭️ Performance tests skipped for now"
+
+  # ============================================
+  # Stage 5: Security Scan
+  # ============================================
+  security:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: 🔍 Run Trivy Security Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+  # ============================================
+  # Stage 6: Deploy to EC2
+  # ============================================
   deploy:
     name: 🚀 Deploy to EC2
     runs-on: ubuntu-latest
+    needs: [docker, security]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
     
     steps:
-      - name: 📥 Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: 🔐 Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🔐 Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: 🔑 Setup SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
-      - name: 📦 Deploy to EC2
+      - name: 📦 Transfer Files
         run: |
-          ssh -i ~/.ssh/id_rsa ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
-            # Clean old code
-            rm -rf ~/silea
-            mkdir ~/silea
-          EOF
-          
-          # Copy code to EC2
-          scp -i ~/.ssh/id_rsa -r Backend Frontend docker-compose.yml ec2-user@${{ secrets.EC2_HOST }}:~/silea/
-          
-          # Build and start on EC2
-          ssh -i ~/.ssh/id_rsa ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no docker-compose.yml ec2-user@${{ secrets.EC2_HOST }}:~/silea/
+
+      - name: 🚀 Deploy on EC2
+        run: |
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
+            # Login to ECR
+            aws ecr get-login-password --region eu-west-3 | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
+            
+            # Update docker-compose to use ECR images
             cd ~/silea
+            sed -i 's|build: ./Backend|image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_BACKEND_REPOSITORY }}:latest|g' docker-compose.yml
+            sed -i 's|build:|image:|g' docker-compose.yml
+            sed -i 's|context: ./Frontend|${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_FRONTEND_REPOSITORY }}:latest|g' docker-compose.yml
             
-            # Install Docker if not installed
-            if ! command -v docker &> /dev/null; then
-              sudo yum install -y docker
-              sudo systemctl start docker
-              sudo systemctl enable docker
-              sudo usermod -aG docker ec2-user
-            fi
+            # Pull and restart
+            docker-compose pull backend frontend
+            docker-compose up -d --no-deps backend frontend
             
-            # Install Docker Compose if not installed
-            if ! command -v docker-compose &> /dev/null; then
-              sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-              sudo chmod +x /usr/local/bin/docker-compose
-            fi
+            # Cleanup
+            docker image prune -f
             
-            # Stop old containers
-            docker-compose down || true
-            
-            # Build and start
-            docker-compose up -d --build
-            
-            # Show status
+            echo "✅ Deployment Complete"
             docker-compose ps
           EOF
 
-      - name: ✅ Deployment Complete
+      - name: ✅ Deployment Summary
         run: |
-          echo "🎉 Deployment successful!"
-          echo ""
-          echo "🌐 Access your application:"
-          echo "   Frontend:    http://${{ secrets.EC2_HOST }}:3000"
-          echo "   Backend:     http://${{ secrets.EC2_HOST }}:8080/api"
-          echo "   phpMyAdmin:  http://${{ secrets.EC2_HOST }}:8081"
+          echo "## 🎉 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📍 Application URLs:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend:** http://${{ secrets.EC2_HOST }}:3000" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend API:** http://${{ secrets.EC2_HOST }}:8080/api" >> $GITHUB_STEP_SUMMARY
+          echo "- **phpMyAdmin:** http://${{ secrets.EC2_HOST }}:8081" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔖 **Version:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
