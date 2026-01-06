@@ -1,5 +1,5 @@
 # Multi-stage build for Spring Boot application
-FROM maven:3.9-eclipse-temurin-17-alpine AS build
+FROM maven:3.9-eclipse-temurin-17 AS build
 
 WORKDIR /app
 
@@ -11,13 +11,13 @@ COPY src ./src
 RUN mvn clean package -DskipTests -B
 
 # Runtime stage with minimal JRE
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jre
 
 WORKDIR /app
 
 # Create non-root user for security
-RUN addgroup -g 1001 -S spring && \
-    adduser -u 1001 -S spring -G spring
+RUN groupadd -r spring -g 1001 && \
+    useradd -r -u 1001 -g spring spring
 
 # Create uploads directory
 RUN mkdir -p /app/uploads && chown -R spring:spring /app/uploads
