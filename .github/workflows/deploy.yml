@@ -308,30 +308,102 @@ jobs:
           chmod 600 ~/.ssh/ec2-key.pem
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
-      - name: 📦 Transfer Files
+      - name: � Deploy on EC2
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          scp -i ~/.ssh/ec2-key.pem -o StrictHostKeyChecking=no docker-compose.yml ec2-user@${{ secrets.EC2_HOST }}:~/silea/
-
-      - name: 🚀 Deploy on EC2
-        run: |
-          ssh -i ~/.ssh/ec2-key.pem -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
-            # Login to ECR
-            aws ecr get-login-password --region eu-west-3 | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
+          ssh -i ~/.ssh/ec2-key.pem -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} << 'ENDSSH'
+            set -e
             
+            echo "🔐 Logging into ECR..."
+            aws ecr get-login-password --region eu-west-3 | docker login --username AWS --password-stdin 442147575154.dkr.ecr.eu-west-3.amazonaws.com
+            
+            echo "📥 Pulling images from ECR..."
+            docker pull 442147575154.dkr.ecr.eu-west-3.amazonaws.com/silea-backend:latest
+            docker pull 442147575154.dkr.ecr.eu-west-3.amazonaws.com/silea-frontend:latest
+            docker pull mysql:8.0
+            docker pull phpmyadmin:latest
+            
+            echo "📝 Creating docker-compose with ECR images..."
             cd ~/silea
+            cat > docker-compose.yml << 'EOF'
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: silea-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: SileaDB2026!Secure
+      MYSQL_DATABASE: silea_db
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: 442147575154.dkr.ecr.eu-west-3.amazonaws.com/silea-backend:latest
+    container_name: silea-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/silea_db
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: SileaDB2026!Secure
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: always
+
+  frontend:
+    image: 442147575154.dkr.ecr.eu-west-3.amazonaws.com/silea-frontend:latest
+    container_name: silea-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://35.180.229.121:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: always
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: silea-phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: SileaDB2026!Secure
+    ports:
+      - "8081:80"
+    depends_on:
+      - mysql
+    restart: always
+
+volumes:
+  mysql_data:
+EOF
             
-            # Pull latest images
-            docker-compose pull backend frontend || true
-            
-            # Start containers
+            echo "🚀 Starting containers..."
+            docker-compose down --remove-orphans
             docker-compose up -d
             
-            # Cleanup
-            docker image prune -f
+            echo "⏳ Waiting for services to start..."
+            sleep 30
             
-            echo "✅ Deployment Complete"
+            echo "🧹 Cleaning up old images..."
+            docker image prune -af --filter "until=24h"
+            
+            echo ""
+            echo "✅ Deployment Complete!"
+            echo ""
             docker-compose ps
-          EOF
+          ENDSSH
 
       - name: ✅ Deployment Summary
         run: |
@@ -342,5 +414,33 @@ jobs:
           echo "- **Backend API:** http://${{ secrets.EC2_HOST }}:8080/api" >> $GITHUB_STEP_SUMMARY
           echo "- **phpMyAdmin:** http://${{ secrets.EC2_HOST }}:8081" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📦 Version:" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Deployed Version:" >> $GITHUB_STEP_SUMMARY
           echo "\`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✨ Test Your Application:" >> $GITHUB_STEP_SUMMARY
+          echo "1. **Frontend:** Browse products and add to cart" >> $GITHUB_STEP_SUMMARY
+          echo "2. **Backend API:** \`curl http://${{ secrets.EC2_HOST }}:8080/api/products\`" >> $GITHUB_STEP_SUMMARY
+          echo "3. **Database:** Access phpMyAdmin to verify data" >> $GITHUB_STEP_SUMMARY
+          
+      - name: 🧪 Health Check
+        run: |
+          echo "🔍 Running health checks..."
+          sleep 5
+          
+          # Check backend
+          if curl -f -s http://${{ secrets.EC2_HOST }}:8080/api/products > /dev/null; then
+            echo "✅ Backend is healthy"
+            echo "- ✅ Backend API responding" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Backend health check failed"
+            echo "- ❌ Backend API not responding" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check frontend
+          if curl -f -s http://${{ secrets.EC2_HOST }}:3000 > /dev/null; then
+            echo "✅ Frontend is healthy"
+            echo "- ✅ Frontend responding" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Frontend health check failed"
+            echo "- ❌ Frontend not responding" >> $GITHUB_STEP_SUMMARY
+          fi
