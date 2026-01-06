@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 env:
-  AWS_REGION: us-east-1 # Change to your preferred region
+  AWS_REGION: eu-west-3 # Paris region (closest to Morocco)
   ECR_BACKEND_REPOSITORY: silea-backend
   ECR_FRONTEND_REPOSITORY: silea-frontend
   ECS_CLUSTER: silea-cluster
