@@ -326,68 +326,68 @@ jobs:
             
             echo "📝 Creating docker-compose with ECR images..."
             cd ~/silea
-            cat > docker-compose.yml << 'EOFCOMPOSE'
-version: '3.8'
+            cat > docker-compose.yml <<'EOF'
+          version: '3.8'
 
-services:
-  mysql:
-    image: mysql:8.0
-    container_name: silea-mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: SileaDB2026!Secure
-      MYSQL_DATABASE: silea_db
-    volumes:
-      - mysql_data:/var/lib/mysql
-    ports:
-      - "3306:3306"
-    restart: always
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+          services:
+            mysql:
+              image: mysql:8.0
+              container_name: silea-mysql
+              environment:
+                MYSQL_ROOT_PASSWORD: SileaDB2026!Secure
+                MYSQL_DATABASE: silea_db
+              volumes:
+                - mysql_data:/var/lib/mysql
+              ports:
+                - "3306:3306"
+              restart: always
+              healthcheck:
+                test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
 
-  backend:
-    image: 442147575154.dkr.ecr.eu-west-3.amazonaws.com/silea-backend:latest
-    container_name: silea-backend
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/silea_db
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: SileaDB2026!Secure
-    ports:
-      - "8080:8080"
-    depends_on:
-      mysql:
-        condition: service_healthy
-    restart: always
+            backend:
+              image: 442147575154.dkr.ecr.eu-west-3.amazonaws.com/silea-backend:latest
+              container_name: silea-backend
+              environment:
+                SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/silea_db
+                SPRING_DATASOURCE_USERNAME: root
+                SPRING_DATASOURCE_PASSWORD: SileaDB2026!Secure
+              ports:
+                - "8080:8080"
+              depends_on:
+                mysql:
+                  condition: service_healthy
+              restart: always
 
-  frontend:
-    image: 442147575154.dkr.ecr.eu-west-3.amazonaws.com/silea-frontend:latest
-    container_name: silea-frontend
-    environment:
-      NEXT_PUBLIC_API_URL: http://35.180.229.121:8080
-    ports:
-      - "3000:3000"
-    depends_on:
-      - backend
-    restart: always
+            frontend:
+              image: 442147575154.dkr.ecr.eu-west-3.amazonaws.com/silea-frontend:latest
+              container_name: silea-frontend
+              environment:
+                NEXT_PUBLIC_API_URL: http://35.180.229.121:8080
+              ports:
+                - "3000:3000"
+              depends_on:
+                - backend
+              restart: always
 
-  phpmyadmin:
-    image: phpmyadmin:latest
-    container_name: silea-phpmyadmin
-    environment:
-      PMA_HOST: mysql
-      PMA_USER: root
-      PMA_PASSWORD: SileaDB2026!Secure
-    ports:
-      - "8081:80"
-    depends_on:
-      - mysql
-    restart: always
+            phpmyadmin:
+              image: phpmyadmin:latest
+              container_name: silea-phpmyadmin
+              environment:
+                PMA_HOST: mysql
+                PMA_USER: root
+                PMA_PASSWORD: SileaDB2026!Secure
+              ports:
+                - "8081:80"
+              depends_on:
+                - mysql
+              restart: always
 
-volumes:
-  mysql_data:
-EOFCOMPOSE
+          volumes:
+            mysql_data:
+          EOF
             
             echo "🚀 Starting containers..."
             docker-compose down --remove-orphans
