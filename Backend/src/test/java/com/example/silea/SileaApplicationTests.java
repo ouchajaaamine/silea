@@ -1,10 +1,10 @@
-package com.example.barakahstore;
+package com.example.silea;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class sileaApplicationTests {
+class SileaApplicationTests {
 
 	@Test
 	void contextLoads() {
