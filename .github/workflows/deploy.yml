@@ -312,19 +312,17 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          ssh -i ~/.ssh/ec2-key.pem -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} << 'ENDSSH'
+          ssh -i ~/.ssh/ec2-key.pem \
+            -o StrictHostKeyChecking=no \
+            -o ServerAliveInterval=30 \
+            -o ServerAliveCountMax=10 \
+            ec2-user@${{ secrets.EC2_HOST }} << 'ENDSSH'
             set -e
             
             echo "🔐 Logging into ECR..."
             aws ecr get-login-password --region eu-west-3 | docker login --username AWS --password-stdin 442147575154.dkr.ecr.eu-west-3.amazonaws.com
             
-            echo "📥 Pulling images from ECR..."
-            docker pull 442147575154.dkr.ecr.eu-west-3.amazonaws.com/silea-backend:latest
-            docker pull 442147575154.dkr.ecr.eu-west-3.amazonaws.com/silea-frontend:latest
-            docker pull mysql:8.0
-            docker pull phpmyadmin:latest
-            
-            echo "📝 Creating docker-compose with ECR images..."
+            echo "📝 Creating docker-compose configuration..."
             cd ~/silea
             cat > docker-compose.yml <<'EOF'
           version: '3.8'
@@ -389,19 +387,18 @@ jobs:
             mysql_data:
           EOF
             
-            echo "🚀 Starting containers..."
-            docker-compose down --remove-orphans
+            echo "📥 Pulling images and deploying..."
+            docker-compose pull
             docker-compose up -d
             
-            echo "⏳ Waiting for services to start..."
-            sleep 30
+            echo "⏳ Waiting for services to be healthy..."
+            sleep 45
             
             echo "🧹 Cleaning up old images..."
-            docker image prune -af --filter "until=24h"
+            docker image prune -af --filter "until=24h" || true
             
             echo ""
             echo "✅ Deployment Complete!"
-            echo ""
             docker-compose ps
           ENDSSH
 
