@@ -49,7 +49,7 @@ export function CategoryDialogProvider({ children }: { children: React.ReactNode
           <div className="flex flex-col sm:flex-row justify-center items-stretch gap-6 max-w-5xl mx-auto px-8 py-6">
             {/* Honey Card */}
             <Link 
-              href="/category/honey" 
+              href="/category/miels" 
               className="flex-1 min-w-[280px] sm:max-w-md group"
               onClick={closeDialog}
             >
@@ -94,7 +94,7 @@ export function CategoryDialogProvider({ children }: { children: React.ReactNode
 
             {/* Oils Card */}
             <Link 
-              href="/category/oils" 
+              href="/category/huiles-olive" 
               className="flex-1 min-w-[280px] sm:max-w-md group"
               onClick={closeDialog}
             >

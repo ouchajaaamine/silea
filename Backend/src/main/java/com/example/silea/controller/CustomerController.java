@@ -117,7 +117,8 @@ public class CustomerController {
                 request.getName(),
                 request.getEmail(),
                 request.getPhone(),
-                request.getAddress()
+                request.getAddress(),
+                request.getCity()
             );
 
             Map<String, Object> response = new HashMap<>();
@@ -406,6 +407,7 @@ public class CustomerController {
         private String email;
         private String phone;
         private String address;
+        private String city;
 
         public CustomerRequest() {}
 
@@ -420,6 +422,9 @@ public class CustomerController {
 
         public String getAddress() { return address; }
         public void setAddress(String address) { this.address = address; }
+
+        public String getCity() { return city; }
+        public void setCity(String city) { this.city = city; }
     }
 
     public static class StatusRequest {

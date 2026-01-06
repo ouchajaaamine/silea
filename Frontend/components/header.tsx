@@ -41,10 +41,10 @@ export default function Header() {
 
   const getLocalizedCategoryLabel = (category: Category) => {
     const slugSource = (category.slug || category.name || '').toLowerCase()
-    if (slugSource.includes('honey')) {
+    if (slugSource.includes('honey') || slugSource.includes('miel')) {
       return t.nav.categories.honey
     }
-    if (slugSource.includes('oil')) {
+    if (slugSource.includes('oil') || slugSource.includes('huile')) {
       return t.nav.categories.oils
     }
     if (language === 'ar' && category.nameAr) {
@@ -269,7 +269,7 @@ export default function Header() {
                       <p className="text-[#556B2F]/60 mb-6 max-w-[200px]">
                         {t.cart.empty.description}
                       </p>
-                      <Link href="/category/honey">
+                      <Link href="/category/miels">
                         <Button className="bg-[#556B2F] hover:bg-[#556B2F]/90 text-white shadow-lg shadow-[#556B2F]/20">
                           <Sparkles className="w-4 h-4 mr-2" />
                           {t.cart.empty.startShopping}
@@ -363,14 +363,9 @@ export default function Header() {
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-[#556B2F]/60">{t.common.shipping}</span>
-                        {shipping === 0 ? (
-                          <span className="text-[#556B2F] font-medium flex items-center gap-1">
-                            <Gift className="w-3 h-3 text-[#D6A64F]" />
-                            {t.common.free}
-                          </span>
-                        ) : (
-                          <span className="text-[#556B2F]">{shipping.toFixed(2)} MAD</span>
-                        )}
+                        <span className="text-[#556B2F] text-xs">
+                          {t.cart.shippingDetails.shippingDependsOnCity}
+                        </span>
                       </div>
                       <Separator className="bg-[#556B2F]/10 my-2" />
                       <div className="flex justify-between items-center">

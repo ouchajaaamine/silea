@@ -174,6 +174,9 @@ export interface Translations {
       shippingAddress: string
       streetAddress: string
       city: string
+      cityTangier: string
+      cityOther: string
+      shippingDependsOnCity: string
       additionalNotes: string
       optional: string
       notesPlaceholder: string
@@ -644,6 +647,9 @@ export const translations: Record<Language, Translations> = {
         shippingAddress: 'Shipping Address',
         streetAddress: 'Street Address',
         city: 'City',
+        cityTangier: 'Tangier',
+        cityOther: 'Other city',
+        shippingDependsOnCity: '20 MAD in Tangier • 35 MAD other cities',
         additionalNotes: 'Additional Notes',
         optional: 'Optional',
         notesPlaceholder: 'Any special instructions for delivery? (e.g., ring doorbell, leave at door...)',
@@ -1100,6 +1106,9 @@ export const translations: Record<Language, Translations> = {
         shippingAddress: 'Adresse de livraison',
         streetAddress: 'Adresse',
         city: 'Ville',
+        cityTangier: 'Tanger',
+        cityOther: 'Autre ville',
+        shippingDependsOnCity: '20 MAD à Tanger • 35 MAD autres villes',
         additionalNotes: 'Notes supplémentaires',
         optional: 'Optionnel',
         notesPlaceholder: 'Des instructions spéciales pour la livraison ? (ex. : sonner à la porte, laisser à la porte...)',
@@ -1556,6 +1565,9 @@ export const translations: Record<Language, Translations> = {
         shippingAddress: 'عنوان الشحن',
         streetAddress: 'العنوان',
         city: 'المدينة',
+        cityTangier: 'طنجة',
+        cityOther: 'مدينة أخرى',
+        shippingDependsOnCity: '20 درهم في طنجة • 35 درهم مدن أخرى',
         additionalNotes: 'ملاحظات إضافية',
         optional: 'اختياري',
         notesPlaceholder: 'أي تعليمات خاصة للتوصيل؟ (مثل: رن الجرس، اترك عند الباب...)',

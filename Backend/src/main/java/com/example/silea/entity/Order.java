@@ -37,6 +37,15 @@ public class Order {
     @Column(name = "shipping_address", nullable = false)
     private String shippingAddress;
     
+    @Column(name = "shipping_city", nullable = false)
+    private String shippingCity;
+    
+    @Column(name = "shipping_cost", nullable = false, precision = 10, scale = 2)
+    private BigDecimal shippingCost = BigDecimal.ZERO;
+    
+    @Column(name = "subtotal", nullable = false, precision = 10, scale = 2)
+    private BigDecimal subtotal = BigDecimal.ZERO;
+    
     @Column(columnDefinition = "TEXT")
     private String notes;
     
@@ -123,6 +132,30 @@ public class Order {
     
     public void setShippingAddress(String shippingAddress) {
         this.shippingAddress = shippingAddress;
+    }
+    
+    public String getShippingCity() {
+        return shippingCity;
+    }
+    
+    public void setShippingCity(String shippingCity) {
+        this.shippingCity = shippingCity;
+    }
+    
+    public BigDecimal getShippingCost() {
+        return shippingCost;
+    }
+    
+    public void setShippingCost(BigDecimal shippingCost) {
+        this.shippingCost = shippingCost;
+    }
+    
+    public BigDecimal getSubtotal() {
+        return subtotal;
+    }
+    
+    public void setSubtotal(BigDecimal subtotal) {
+        this.subtotal = subtotal;
     }
     
     public String getNotes() {

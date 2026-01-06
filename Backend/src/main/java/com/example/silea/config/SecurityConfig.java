@@ -45,6 +45,9 @@ public class SecurityConfig {
                 // Swagger/OpenAPI
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
                 
+                // Actuator - health check endpoint
+                .requestMatchers("/actuator/health").permitAll()
+                
                 // Products - GET is public
                 .requestMatchers(HttpMethod.GET, "/api/products").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()

@@ -27,13 +27,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, 
                                   FilterChain filterChain) throws ServletException, IOException {
         
-        String authorizationHeader = request.getHeader("Authorization");
         String requestURI = request.getRequestURI();
-        String method = request.getMethod();
         
-        System.out.println("=== JWT Filter Debug ===");
-        System.out.println("Request: " + method + " " + requestURI);
-        System.out.println("Authorization header present: " + (authorizationHeader != null));
+        // Skip JWT authentication for actuator health endpoint
+        if (requestURI.equals("/actuator/health")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        
+        String authorizationHeader = request.getHeader("Authorization");
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             String token = authorizationHeader.substring(7);
@@ -43,8 +45,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     String email = jwtUtil.getEmailFromToken(token);
                     String role = jwtUtil.getRoleFromToken(token);
                     
-                    System.out.println("Token valid! Email: " + email + ", Role: " + role);
-                    
                     // Create authentication object
                     List<SimpleGrantedAuthority> authorities = List.of(
                         new SimpleGrantedAuthority("ROLE_" + role)
@@ -52,22 +52,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     
                     UsernamePasswordAuthenticationToken authentication = 
                         new UsernamePasswordAuthenticationToken(email, null, authorities);
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-                    System.out.println("Authentication set successfully with role: ROLE_" + role);
-                } else {
-                    System.out.println("Token validation failed!");
                 }
             } catch (Exception e) {
-                // Invalid token, continue without authentication
-                System.out.println("JWT Token error: " + e.getMessage());
-                logger.debug("Invalid JWT token: " + e.getMessage());
+                System.err.println("JWT validation failed: " + e.getMessage());
             }
-        } else {
-            System.out.println("No Bearer token found in request");
         }
-
+        
         filterChain.doFilter(request, response);
     }
 }

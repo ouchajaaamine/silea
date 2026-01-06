@@ -32,6 +32,9 @@ public class Customer {
     @Column(nullable = false)
     private String address;
     
+    @Column(nullable = false)
+    private String city;
+    
     @Column(name = "total_orders", nullable = false)
     private Integer totalOrders = 0;
     
@@ -62,11 +65,12 @@ public class Customer {
     public Customer() {}
     
     // Constructor
-    public Customer(String name, String email, String phone, String address) {
+    public Customer(String name, String email, String phone, String address, String city) {
         this.name = name;
         this.email = email;
         this.phone = phone;
         this.address = address;
+        this.city = city;
     }
     
     // Getters and Setters
@@ -108,6 +112,14 @@ public class Customer {
     
     public void setAddress(String address) {
         this.address = address;
+    }
+    
+    public String getCity() {
+        return city;
+    }
+    
+    public void setCity(String city) {
+        this.city = city;
     }
     
     public Integer getTotalOrders() {

@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import com.example.silea.entity.*;
 import com.example.silea.enums.OrderStatus;
 import com.example.silea.enums.ProductSize;
+import com.example.silea.service.CartService;
 import com.example.silea.service.CustomerService;
 import com.example.silea.service.OrderService;
 import com.example.silea.service.ProductService;
@@ -32,11 +33,13 @@ public class OrderController {
     private final OrderService orderService;
     private final CustomerService customerService;
     private final ProductService productService;
+    private final CartService cartService;
 
-    public OrderController(OrderService orderService, CustomerService customerService, ProductService productService) {
+    public OrderController(OrderService orderService, CustomerService customerService, ProductService productService, CartService cartService) {
         this.orderService = orderService;
         this.customerService = customerService;
         this.productService = productService;
+        this.cartService = cartService;
     }
 
     /**
@@ -70,6 +73,23 @@ public class OrderController {
         sizes.put("honey", honeySizes);
         
         return ResponseEntity.ok(sizes);
+    }
+    
+    /**
+     * Calculate shipping cost for a city
+     */
+    @GetMapping("/shipping")
+    @Operation(summary = "Calculate shipping cost", description = "Calculate shipping cost based on destination city. Tanger: 20 MAD, Other cities: 35 MAD. Delivery time: 24-72h")
+    public ResponseEntity<?> calculateShipping(@RequestParam String city) {
+        try {
+            Map<String, Object> shippingInfo = cartService.getShippingInfo(city);
+            return ResponseEntity.ok(shippingInfo);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "Error calculating shipping: " + e.getMessage()
+            ));
+        }
     }
 
     /**
@@ -112,13 +132,17 @@ public class OrderController {
                     request.getCustomerName(),
                     request.getCustomerEmail(),
                     request.getCustomerPhone(),
-                    request.getShippingAddress()
+                    request.getShippingAddress(),
+                    request.getCustomerCity()
                 );
             }
 
+            // Calculate shipping cost based on city
+            BigDecimal shippingCost = cartService.calculateShipping(request.getCustomerCity());
+
             // Convert request items to OrderItem entities with automatic pricing
             List<OrderItem> orderItems = new ArrayList<>();
-            BigDecimal orderTotal = BigDecimal.ZERO;
+            BigDecimal subtotal = BigDecimal.ZERO;
             List<Map<String, Object>> itemDetails = new ArrayList<>();
 
             for (OrderItemRequest item : request.getItems()) {
@@ -158,7 +182,7 @@ public class OrderController {
                 
                 // Calculate total for this item
                 BigDecimal itemTotal = unitPrice.multiply(BigDecimal.valueOf(item.getQuantity()));
-                orderTotal = orderTotal.add(itemTotal);
+                subtotal = subtotal.add(itemTotal);
                 
                 // Create order item
                 OrderItem orderItem = new OrderItem();
@@ -184,6 +208,9 @@ public class OrderController {
                 itemDetails.add(itemDetail);
             }
 
+            // Calculate total with shipping
+            BigDecimal orderTotal = subtotal.add(shippingCost);
+
             // Create order
             Order order = orderService.createOrder(
                 customer,
@@ -192,6 +219,11 @@ public class OrderController {
                 request.getNotes(),
                 request.getEstimatedDeliveryDate()
             );
+            
+            // Set shipping information
+            order.setShippingCity(request.getCustomerCity());
+            order.setShippingCost(shippingCost);
+            order.setSubtotal(subtotal);
 
             // Build detailed response
             Map<String, Object> response = new HashMap<>();
@@ -216,11 +248,15 @@ public class OrderController {
             orderSummary.put("customer", customerInfo);
             
             orderSummary.put("shippingAddress", order.getShippingAddress());
+            orderSummary.put("shippingCity", order.getShippingCity());
             orderSummary.put("notes", order.getNotes());
             
             // Items with full details
             orderSummary.put("items", itemDetails);
             orderSummary.put("itemCount", orderItems.size());
+            orderSummary.put("subtotal", subtotal);
+            orderSummary.put("shippingCost", shippingCost);
+            orderSummary.put("deliveryTime", "24-72h");
             orderSummary.put("totalAmount", orderTotal);
             
             response.put("order", orderSummary);
@@ -404,6 +440,10 @@ public class OrderController {
         
         if (request.getShippingAddress() == null || request.getShippingAddress().trim().isEmpty()) {
             errors.add("Shipping address is required");
+        }
+        
+        if (request.getCustomerCity() == null || request.getCustomerCity().trim().isEmpty()) {
+            errors.add("Customer city is required");
         }
         
         if (request.getItems() != null) {
@@ -882,6 +922,7 @@ public class OrderController {
         private String customerName;
         private String customerEmail;
         private String customerPhone;
+        private String customerCity;
         private String shippingAddress;
         private String notes;
         private LocalDateTime estimatedDeliveryDate;
@@ -898,6 +939,9 @@ public class OrderController {
 
         public String getCustomerPhone() { return customerPhone; }
         public void setCustomerPhone(String customerPhone) { this.customerPhone = customerPhone; }
+        
+        public String getCustomerCity() { return customerCity; }
+        public void setCustomerCity(String customerCity) { this.customerCity = customerCity; }
 
         public String getShippingAddress() { return shippingAddress; }
         public void setShippingAddress(String shippingAddress) { this.shippingAddress = shippingAddress; }

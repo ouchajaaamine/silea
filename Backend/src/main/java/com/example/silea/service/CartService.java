@@ -7,7 +7,9 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class CartService {
@@ -91,12 +93,47 @@ public class CartService {
     }
 
     /**
-     * Calculate shipping cost (simple implementation)
+     * Calculate shipping cost based on city
+     * Tanger: 20 MAD
+     * Other cities: 35 MAD
+     * Delivery time: 24-72h
      */
+    public BigDecimal calculateShipping(String city) {
+        if (city == null || city.trim().isEmpty()) {
+            return BigDecimal.valueOf(35); // Default to other cities
+        }
+        
+        String normalizedCity = city.trim().toLowerCase();
+        // Check if city is Tanger (handle various spellings)
+        if (normalizedCity.equals("tanger") || 
+            normalizedCity.equals("tangier") || 
+            normalizedCity.equals("طنجة")) {
+            return BigDecimal.valueOf(20);
+        }
+        
+        // All other cities
+        return BigDecimal.valueOf(35);
+    }
+    
+    /**
+     * Get shipping info for a city
+     */
+    public Map<String, Object> getShippingInfo(String city) {
+        BigDecimal cost = calculateShipping(city);
+        Map<String, Object> info = new HashMap<>();
+        info.put("cost", cost);
+        info.put("deliveryTime", "24-72h");
+        info.put("city", city);
+        return info;
+    }
+
+    /**
+     * Calculate shipping cost (simple implementation - deprecated, use calculateShipping(city) instead)
+     */
+    @Deprecated
     private BigDecimal calculateShipping(List<CartItem> items) {
-        BigDecimal subtotal = calculateTotal(items);
-        // Free shipping over 200 DH
-        return subtotal.compareTo(BigDecimal.valueOf(200)) >= 0 ? BigDecimal.ZERO : BigDecimal.valueOf(30);
+        // Default shipping cost for other cities
+        return BigDecimal.valueOf(35);
     }
 
     // DTO classes

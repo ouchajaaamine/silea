@@ -1,0 +1,13 @@
+target/
+.mvn/
+.idea/
+*.iml
+*.log
+.git/
+.gitignore
+*.md
+test-*.json
+create-webhook.ps1
+uploads/
+.DS_Store
+Thumbs.db

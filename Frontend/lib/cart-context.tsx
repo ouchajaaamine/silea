@@ -152,30 +152,6 @@ const CART_STORAGE_KEY = 'silea_cart'
 export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, { items: [], isOpen: false })
 
-  // Load cart from localStorage on mount
-  useEffect(() => {
-    try {
-      const savedCart = localStorage.getItem(CART_STORAGE_KEY)
-      if (savedCart) {
-        const parsedCart = JSON.parse(savedCart)
-        if (Array.isArray(parsedCart)) {
-          dispatch({ type: 'LOAD_CART', items: parsedCart })
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load cart from localStorage:', error)
-    }
-  }, [])
-
-  // Save cart to localStorage when it changes
-  useEffect(() => {
-    try {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state.items))
-    } catch (error) {
-      console.error('Failed to save cart to localStorage:', error)
-    }
-  }, [state.items])
-
   const addItem = (product: CartProduct | Product, size: ProductSize, quantity = 1) => {
     const cartProduct: CartProduct = {
       id: product.id,

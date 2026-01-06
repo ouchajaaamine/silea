@@ -1,0 +1,16 @@
+node_modules/
+.next/
+.pnpm-store/
+out/
+build/
+dist/
+.turbo/
+.vercel/
+.git/
+.gitignore
+.eslintrc.json
+*.log
+.DS_Store
+Thumbs.db
+*.md
+tsconfig.tsbuildinfo

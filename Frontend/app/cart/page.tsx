@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
   Dialog,
   DialogContent,
@@ -42,6 +43,7 @@ interface FormErrors {
   customerEmail?: string;
   customerPhone?: string;
   shippingAddress?: string;
+  customerCity?: string;
 }
 
 export default function CartPage() {
@@ -66,16 +68,40 @@ export default function CartPage() {
     }
   }, [items, totalItems, subtotal])
 
+  const [cityOption, setCityOption] = useState<"tangier" | "other" | "">("") // tangier or other
+  const [otherCityName, setOtherCityName] = useState("") // for when user selects "other"
+  
   const [formData, setFormData] = useState({
     customerName: "",
     customerEmail: "",
     customerPhone: "",
     shippingAddress: "",
-    city: "",
+    customerCity: "",
     notes: "",
   })
 
-  const shipping = subtotal >= 200 ? 0 : 30
+  const [shippingInfo, setShippingInfo] = useState<{
+    cost: number;
+    deliveryTime: string;
+  }>({
+    cost: 35, // Default to other cities
+    deliveryTime: "24-72h"
+  })
+
+  // Update formData.customerCity based on cityOption
+  useEffect(() => {
+    if (cityOption === "tangier") {
+      setFormData(prev => ({ ...prev, customerCity: "Tanger" }))
+      setShippingInfo({ cost: 20, deliveryTime: "24-72h" })
+    } else if (cityOption === "other" && otherCityName.trim()) {
+      setFormData(prev => ({ ...prev, customerCity: otherCityName }))
+      setShippingInfo({ cost: 35, deliveryTime: "24-72h" })
+    } else {
+      setFormData(prev => ({ ...prev, customerCity: "" }))
+    }
+  }, [cityOption, otherCityName])
+
+  const shipping = shippingInfo.cost
   const total = subtotal + shipping
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -112,6 +138,12 @@ export default function CartPage() {
     if (!formData.shippingAddress.trim()) {
       newErrors.shippingAddress = "Shipping address is required"
     }
+    
+    if (!cityOption) {
+      newErrors.customerCity = "Please select a shipping option"
+    } else if (cityOption === "other" && !otherCityName.trim()) {
+      newErrors.customerCity = "Please enter your city name"
+    }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -129,15 +161,12 @@ export default function CartPage() {
     try {
       setLoading(true)
 
-      const fullAddress = formData.city 
-        ? `${formData.shippingAddress}, ${formData.city}` 
-        : formData.shippingAddress
-
       const orderData = {
         customerName: formData.customerName,
         customerEmail: formData.customerEmail,
         customerPhone: formData.customerPhone,
-        shippingAddress: fullAddress,
+        shippingAddress: formData.shippingAddress,
+        customerCity: formData.customerCity,
         notes: formData.notes,
         items: items.map((item) => ({
           productId: item.product.id,
@@ -152,7 +181,7 @@ export default function CartPage() {
         setOrderResult({
           orderNumber: response.order.orderNumber || "N/A",
           trackingCode: response.order.trackingCode || "",
-          total: response.order.total || total,
+          total: response.order.totalAmount || total,
           estimatedDelivery: response.order.estimatedDeliveryDate || new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
         })
         setStep("done")
@@ -331,10 +360,17 @@ export default function CartPage() {
                         </div>
                         
                         <div className="flex justify-between text-sm py-2 border-b border-[#556B2F]/10">
-                          <span className="text-[#556B2F]/70 font-medium">{t.common.shipping}</span>
-                          <span className="font-semibold text-[#556B2F] flex items-center gap-1.5">
-                            <Gift className="w-4 h-4 text-[#D6A64F]" />
-                            <span className="text-[#D6A64F]">{t.common.free}</span>
+                          <div className="flex flex-col">
+                            <span className="text-[#556B2F]/70 font-medium">{t.common.shipping}</span>
+                            {!formData.customerCity && (
+                              <span className="text-xs text-[#556B2F]/50">{t.cart.shippingDetails.shippingDependsOnCity}</span>
+                            )}
+                            {formData.customerCity && (
+                              <span className="text-xs text-[#556B2F]/50">{shippingInfo.deliveryTime}</span>
+                            )}
+                          </div>
+                          <span className="font-semibold text-[#556B2F]">
+                            {formData.customerCity ? `${shipping.toFixed(2)} MAD` : '-'}
                           </span>
                         </div>
                         
@@ -587,16 +623,68 @@ export default function CartPage() {
                           </p>
                         )}
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="city" className="text-[#556B2F] font-medium">{t.cart.shippingDetails.city}</Label>
-                        <Input
-                          id="city"
-                          name="city"
-                          value={formData.city}
-                          onChange={handleInputChange}
-                          className="bg-white border-[#556B2F]/10 h-12"
-                          placeholder={t.cart.placeholders.city}
-                        />
+                      <div className="space-y-3">
+                        <Label className="text-[#556B2F] font-medium">
+                          {t.cart.shippingDetails.city} <span className="text-red-500">{t.cart.labels.required}</span>
+                        </Label>
+                        
+                        <RadioGroup
+                          value={cityOption}
+                          onValueChange={(value: "tangier" | "other") => {
+                            setCityOption(value)
+                            if (errors.customerCity) {
+                              setErrors({ ...errors, customerCity: undefined })
+                            }
+                          }}
+                          className="space-y-3"
+                        >
+                          {/* Tangier Option */}
+                          <div className="flex items-center space-x-3 p-4 rounded-lg border-2 border-[#556B2F]/10 hover:border-[#556B2F]/30 transition-colors bg-white">
+                            <RadioGroupItem value="tangier" id="tangier" className="text-[#556B2F]" />
+                            <Label htmlFor="tangier" className="flex-1 cursor-pointer">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="font-medium text-[#556B2F]">{t.cart.shippingDetails.cityTangier}</div>
+                                  <div className="text-xs text-[#556B2F]/60">Livraison: 24-72h</div>
+                                </div>
+                                <div className="text-lg font-bold text-[#D6A64F]">20 MAD</div>
+                              </div>
+                            </Label>
+                          </div>
+
+                          {/* Other City Option */}
+                          <div className="flex items-center space-x-3 p-4 rounded-lg border-2 border-[#556B2F]/10 hover:border-[#556B2F]/30 transition-colors bg-white">
+                            <RadioGroupItem value="other" id="other" className="text-[#556B2F]" />
+                            <Label htmlFor="other" className="flex-1 cursor-pointer">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="font-medium text-[#556B2F]">{t.cart.shippingDetails.cityOther}</div>
+                                  <div className="text-xs text-[#556B2F]/60">Livraison: 24-72h</div>
+                                </div>
+                                <div className="text-lg font-bold text-[#D6A64F]">35 MAD</div>
+                              </div>
+                            </Label>
+                          </div>
+                        </RadioGroup>
+
+                        {/* Show city input when "other" is selected */}
+                        {cityOption === "other" && (
+                          <div className="ml-9 mt-3">
+                            <Input
+                              placeholder={t.cart.placeholders.city}
+                              value={otherCityName}
+                              onChange={(e) => setOtherCityName(e.target.value)}
+                              className="bg-white border-[#556B2F]/20 h-11"
+                            />
+                          </div>
+                        )}
+
+                        {errors.customerCity && (
+                          <p className="text-xs text-red-500 flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />
+                            {errors.customerCity}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -629,10 +717,13 @@ export default function CartPage() {
                       <span className="text-[#556B2F] font-medium">{subtotal.toFixed(2)} MAD</span>
                     </div>
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-[#556B2F]/80 text-sm">{t.common.shipping}</span>
-                      <span className={shipping === 0 ? "text-[#556B2F] font-medium" : "text-[#556B2F] font-medium"}>
-                        {shipping === 0 ? t.common.free : `${shipping.toFixed(2)} MAD`}
-                      </span>
+                      <div className="flex flex-col">
+                        <span className="text-[#556B2F]/80 text-sm">{t.common.shipping}</span>
+                        {formData.customerCity && (
+                          <span className="text-xs text-[#556B2F]/50">{shippingInfo.deliveryTime}</span>
+                        )}
+                      </div>
+                      <span className="text-[#556B2F] font-medium">{shipping.toFixed(2)} MAD</span>
                     </div>
                     <Separator className="my-3" />
                     <div className="flex items-center justify-between">
@@ -751,7 +842,7 @@ export default function CartPage() {
                     </h3>
                     <div className="p-4 rounded-xl bg-[#FAF7F0] space-y-2">
                       <p className="font-medium text-[#556B2F]">{formData.customerName}</p>
-                      <p className="text-sm text-[#556B2F]/80">{formData.shippingAddress}{formData.city && `, ${formData.city}`}</p>
+                      <p className="text-sm text-[#556B2F]/80">{formData.shippingAddress}{formData.customerCity && `, ${formData.customerCity}`}</p>
                       <p className="text-sm text-[#556B2F]/80">{formData.customerPhone}</p>
                       <p className="text-sm text-[#556B2F]/80">{formData.customerEmail}</p>
                     </div>
@@ -764,10 +855,11 @@ export default function CartPage() {
                       <span className="text-[#556B2F]">{subtotal.toFixed(2)} MAD</span>
                     </div>
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-[#556B2F]/80">{t.common.shipping}</span>
-                      <span className={shipping === 0 ? "text-[#556B2F]" : "text-[#556B2F]"}>
-                        {shipping === 0 ? t.common.free : `${shipping.toFixed(2)} MAD`}
-                      </span>
+                      <div className="flex flex-col">
+                        <span className="text-[#556B2F]/80">{t.common.shipping}</span>
+                        <span className="text-xs text-[#556B2F]/50">{shippingInfo.deliveryTime}</span>
+                      </div>
+                      <span className="text-[#556B2F]">{shipping.toFixed(2)} MAD</span>
                     </div>
                     <Separator className="my-3" />
                     <div className="flex items-center justify-between">

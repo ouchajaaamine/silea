@@ -26,7 +26,7 @@ public class CustomerService {
     /**
      * Create a new customer
      */
-    public Customer createCustomer(String name, String email, String phone, String address) {
+    public Customer createCustomer(String name, String email, String phone, String address, String city) {
         if (customerRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("Customer with this email already exists");
         }
@@ -36,6 +36,7 @@ public class CustomerService {
         customer.setEmail(email);
         customer.setPhone(phone);
         customer.setAddress(address);
+        customer.setCity(city);
         customer.setStatus(CustomerStatus.ACTIVE);
 
         return customerRepository.save(customer);
