@@ -293,6 +293,7 @@ jobs:
         with:
           context: ./Backend
           push: true
+          platforms: linux/amd64,linux/arm64
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_BACKEND_REPOSITORY }}:latest
             ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_BACKEND_REPOSITORY }}:${{ github.sha }}
@@ -338,6 +339,7 @@ jobs:
           scp -i ~/.ssh/ec2-key.pem -o StrictHostKeyChecking=no docker-compose.prod.yml ec2-user@${{ secrets.EC2_HOST }}:/opt/silea/
           scp -i ~/.ssh/ec2-key.pem -o StrictHostKeyChecking=no nginx.conf ec2-user@${{ secrets.EC2_HOST }}:/opt/silea/
           scp -i ~/.ssh/ec2-key.pem -o StrictHostKeyChecking=no deploy.sh ec2-user@${{ secrets.EC2_HOST }}:/opt/silea/
+          ssh -i ~/.ssh/ec2-key.pem -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} "echo 'DB_PASSWORD=SileaDB2026!Secure' > /opt/silea/.env"
 
       - name: 🚀 Deploy on EC2
         run: |

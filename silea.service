@@ -1,0 +1,19 @@
+[Unit]
+Description=Silea E-commerce Application
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/silea
+ExecStart=/usr/bin/docker-compose -f docker-compose.prod.yml up -d
+ExecStop=/usr/bin/docker-compose -f docker-compose.prod.yml down
+ExecReload=/usr/bin/docker-compose -f docker-compose.prod.yml restart
+User=ec2-user
+Group=ec2-user
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target

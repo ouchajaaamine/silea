@@ -22,5 +22,14 @@ docker-compose -f docker-compose.prod.yml up -d --no-deps backend frontend
 echo "🧹 Cleaning up..."
 docker image prune -f
 
+# Show status
+docker-compose -f docker-compose.prod.yml ps
+
+# Health checks
+echo "🏥 Running health checks..."
+sleep 10
+curl -f http://localhost:8080/api/products > /dev/null 2>&1 && echo "✅ Backend is healthy" || echo "⚠️ Backend health check failed"
+curl -f http://localhost:3000 > /dev/null 2>&1 && echo "✅ Frontend is healthy" || echo "⚠️ Frontend health check failed"
+
 echo "✅ Deployment complete!"
 docker-compose -f docker-compose.prod.yml ps
