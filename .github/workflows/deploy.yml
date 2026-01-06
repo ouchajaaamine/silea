@@ -1,0 +1,70 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: 🚀 Deploy to EC2
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔑 Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: 📦 Deploy to EC2
+        run: |
+          ssh -i ~/.ssh/id_rsa ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
+            # Clean old code
+            rm -rf ~/silea
+            mkdir ~/silea
+          EOF
+          
+          # Copy code to EC2
+          scp -i ~/.ssh/id_rsa -r Backend Frontend docker-compose.yml ec2-user@${{ secrets.EC2_HOST }}:~/silea/
+          
+          # Build and start on EC2
+          ssh -i ~/.ssh/id_rsa ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
+            cd ~/silea
+            
+            # Install Docker if not installed
+            if ! command -v docker &> /dev/null; then
+              sudo yum install -y docker
+              sudo systemctl start docker
+              sudo systemctl enable docker
+              sudo usermod -aG docker ec2-user
+            fi
+            
+            # Install Docker Compose if not installed
+            if ! command -v docker-compose &> /dev/null; then
+              sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose
+            fi
+            
+            # Stop old containers
+            docker-compose down || true
+            
+            # Build and start
+            docker-compose up -d --build
+            
+            # Show status
+            docker-compose ps
+          EOF
+
+      - name: ✅ Deployment Complete
+        run: |
+          echo "🎉 Deployment successful!"
+          echo ""
+          echo "🌐 Access your application:"
+          echo "   Frontend:    http://${{ secrets.EC2_HOST }}:3000"
+          echo "   Backend:     http://${{ secrets.EC2_HOST }}:8080/api"
+          echo "   phpMyAdmin:  http://${{ secrets.EC2_HOST }}:8081"

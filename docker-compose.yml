@@ -1,97 +1,61 @@
 version: '3.8'
 
 services:
-  # MySQL Database
   mysql:
     image: mysql:8.0
     container_name: silea-mysql
-    restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_ROOT_PASSWORD: SileaDB2026!Secure
       MYSQL_DATABASE: silea_db
-      MYSQL_USER: silea_user
-      MYSQL_PASSWORD: silea_password
-    ports:
-      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    restart: always
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
-    networks:
-      - silea-network
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # Backend Spring Boot API
   backend:
-    build:
-      context: ./Backend
-      dockerfile: Dockerfile
+    build: ./Backend
     container_name: silea-backend
-    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/silea_db
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: SileaDB2026!Secure
     ports:
       - "8080:8080"
-    environment:
-      # Database configuration
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/silea_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: silea_user
-      SPRING_DATASOURCE_PASSWORD: silea_password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_JPA_SHOW_SQL: "true"
-      
-      # Twilio (replace with your credentials)
-      THIRDPARTY_TWILIO_ACCOUNTSID: ${TWILIO_ACCOUNT_SID:-YOUR_TWILIO_ACCOUNT_SID}
-      THIRDPARTY_TWILIO_AUTHTOKEN: ${TWILIO_AUTH_TOKEN:-YOUR_TWILIO_AUTH_TOKEN}
-      
-      # Monday.com (replace with your credentials)
-      MONDAY_API_KEY: ${MONDAY_API_KEY:-YOUR_MONDAY_API_KEY}
-    volumes:
-      - backend_uploads:/app/uploads
     depends_on:
       mysql:
         condition: service_healthy
-    # Temporarily disabled health check
-    # healthcheck:
-    #   test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 5
-    #   start_period: 40s
-    networks:
-      - silea-network
+    restart: always
 
-  # Frontend Next.js
   frontend:
     build:
       context: ./Frontend
-      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://35.180.229.121:8080
     container_name: silea-frontend
-    restart: unless-stopped
     ports:
       - "3000:3000"
+    depends_on:
+      - backend
+    restart: always
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: silea-phpmyadmin
     environment:
-      # API endpoint - using backend service name for Docker networking
-      NEXT_PUBLIC_API_URL: http://backend:8080
-      NODE_ENV: production
-    # Temporarily removed dependency on backend health
-    # depends_on:
-    #   backend:
-    #     condition: service_healthy
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 40s
-    networks:
-      - silea-network
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: SileaDB2026!Secure
+    ports:
+      - "8081:80"
+    depends_on:
+      - mysql
+    restart: always
 
 volumes:
   mysql_data:
-    driver: local
-  backend_uploads:
-    driver: local
-
-networks:
-  silea-network:
-    driver: bridge
