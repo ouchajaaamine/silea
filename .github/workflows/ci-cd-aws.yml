@@ -304,6 +304,7 @@ jobs:
         with:
           context: ./Frontend
           push: true
+          platforms: linux/amd64,linux/arm64
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_FRONTEND_REPOSITORY }}:latest
             ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_FRONTEND_REPOSITORY }}:${{ github.sha }}
