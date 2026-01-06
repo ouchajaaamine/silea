@@ -7,10 +7,10 @@ set -e
 echo "🚀 Setting up Silea on AWS..."
 
 # Variables - UPDATE THESE
-AWS_ACCOUNT_ID="YOUR_ACCOUNT_ID"
-AWS_REGION="us-east-1"
+AWS_ACCOUNT_ID="442147575154"
+AWS_REGION="eu-west-3"
 GITHUB_REPO="ouchajaaamine/silea"
-DB_PASSWORD="YOUR_SECURE_PASSWORD"
+DB_PASSWORD="SileaDB2026!Secure"
 
 echo "📋 Using Account: $AWS_ACCOUNT_ID"
 echo "📍 Region: $AWS_REGION"
