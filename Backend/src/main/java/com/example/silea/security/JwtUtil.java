@@ -12,7 +12,7 @@ import java.util.Date;
 public class JwtUtil {
 
     private static final String SECRET_KEY = "mySecretKeyForsileaBackendApplicationThatNeedsToBeAtLeast256BitsLong";
-    private static final long JWT_EXPIRATION = 86400000; // 24 hours
+    private static final long JWT_EXPIRATION = 2592000000L; // 30 days (30 * 24 * 60 * 60 * 1000)
 
     private final SecretKey key;
 
