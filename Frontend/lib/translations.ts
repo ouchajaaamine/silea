@@ -263,6 +263,13 @@ export interface Translations {
     reviewsCount: string
     quantity: string
     relatedProducts: string
+    benefitsList: {
+      antioxidants: string
+      energy: string
+      respiratory: string
+      digestion: string
+      antibacterial: string
+    }
   }
 
   // About
@@ -734,6 +741,13 @@ export const translations: Record<Language, Translations> = {
       reviews: 'Reviews',
       categoryBreadcrumb: 'Home',
       relatedProducts: 'Related Products',
+      benefitsList: {
+        antioxidants: 'Rich in antioxidants',
+        energy: 'Natural energy boost',
+        respiratory: 'Supports respiratory health',
+        digestion: 'Aids digestion',
+        antibacterial: 'Antibacterial properties',
+      },
     },
     about: {
       hero: {
@@ -1193,6 +1207,13 @@ export const translations: Record<Language, Translations> = {
       reviews: 'Avis',
       categoryBreadcrumb: 'Accueil',
       relatedProducts: 'Produits associés',
+      benefitsList: {
+        antioxidants: 'Riche en antioxydants',
+        energy: 'Boost d\'énergie naturel',
+        respiratory: 'Soutient la santé respiratoire',
+        digestion: 'Aide à la digestion',
+        antibacterial: 'Propriétés antibactériennes',
+      },
     },
     about: {
       hero: {
@@ -1652,6 +1673,13 @@ export const translations: Record<Language, Translations> = {
       reviews: 'التقييمات',
       categoryBreadcrumb: 'الرئيسية',
       relatedProducts: 'منتجات ذات صلة',
+      benefitsList: {
+        antioxidants: 'غني بمضادات الأكسدة',
+        energy: 'تعزيز طبيعي للطاقة',
+        respiratory: 'يدعم صحة الجهاز التنفسي',
+        digestion: 'يساعد على الهضم',
+        antibacterial: 'خصائص مضادة للبكتيريا',
+      },
     },
     about: {
       hero: {

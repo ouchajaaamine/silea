@@ -156,11 +156,11 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   }
 
   const benefits = [
-    "Rich in antioxidants",
-    "Natural energy boost",
-    "Supports respiratory health",
-    "Aids digestion",
-    "Antibacterial properties",
+    t.product.benefitsList.antioxidants,
+    t.product.benefitsList.energy,
+    t.product.benefitsList.respiratory,
+    t.product.benefitsList.digestion,
+    t.product.benefitsList.antibacterial,
   ]
 
   const reviews = [
