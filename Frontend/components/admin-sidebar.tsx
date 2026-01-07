@@ -8,7 +8,6 @@ import {
   FolderTree,
   ShoppingCart,
   Users,
-  Truck,
   LogOut,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -26,7 +25,6 @@ const sidebarItems: SidebarItem[] = [
   { icon: FolderTree, label: "Categories", href: "/admin/categories" },
   { icon: ShoppingCart, label: "Orders", href: "/admin/orders" },
   { icon: Users, label: "Customers", href: "/admin/customers" },
-  { icon: Truck, label: "Tracking", href: "/admin/tracking" },
 ]
 
 interface AdminSidebarProps {

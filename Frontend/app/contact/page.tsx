@@ -35,10 +35,6 @@ export default function Contact() {
 
   const faqs = [
     {
-      question: t.contact.faq.shipping.question,
-      answer: t.contact.faq.shipping.answer,
-    },
-    {
       question: t.contact.faq.delivery.question,
       answer: t.contact.faq.delivery.answer,
     },

@@ -44,13 +44,11 @@ export default function AdminDashboardPage() {
   const { user, logout, isAuthenticated, isLoading: authLoading } = useAuth()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
-  const [deliveryPerformance, setDeliveryPerformance] = useState<DeliveryPerformance | null>(null)
-  const [alerts, setAlerts] = useState<DashboardAlerts | null>(null)
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
-    // Check authentication (demo mode allows bypass)
+    // Check authentication
     const token = localStorage.getItem("silea_token")
     if (!token && !authLoading) {
       router.push("/admin")
@@ -61,43 +59,23 @@ export default function AdminDashboardPage() {
       try {
         setLoading(true)
         
-        // Fetch all dashboard data in parallel
-        const [statsData, ordersData, performanceData, alertsData] = await Promise.all([
+        // Fetch basic dashboard data
+        const [statsData, ordersData] = await Promise.all([
           dashboardApi.getStats(),
-          dashboardApi.getRecentOrders(10),
-          dashboardApi.getDeliveryPerformance(),
-          dashboardApi.getAlerts(),
+          dashboardApi.getRecentOrders(5),
         ])
 
         setStats(statsData)
         setRecentOrders(ordersData.orders)
-        setDeliveryPerformance(performanceData)
-        setAlerts(alertsData)
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error)
-        // Set demo data on error for development
-        setStats({
-          orders: {
-            totalOrders: 156,
-            pendingOrders: 12,
-            completedOrders: 135,
-            cancelledOrders: 9,
-          },
-          customers: {
-            totalCustomers: 89,
-            activeCustomers: 67,
-            inactiveCustomers: 22,
-          },
-          products: {
-            totalProducts: 24,
-            activeProducts: 20,
-            inactiveProducts: 2,
-            unavailableProducts: 2,
-          },
-          tracking: {
-            totalTrackings: 234,
-            inTransit: 45,
-            delivered: 180,
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDashboardData()
+  }, [authLoading, router])
             pending: 9,
           },
         })

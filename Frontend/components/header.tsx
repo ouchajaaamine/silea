@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Menu, X, ShoppingCart, Search, User, Package, Minus, Plus, Trash2, ArrowRight, Gift, Truck, Shield, Sparkles } from "lucide-react"
+import { Menu, X, ShoppingCart, User, Package, Minus, Plus, Trash2, ArrowRight, Gift, Truck, Shield, Sparkles } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
 import { useTranslation } from "@/lib/translation-context"
 import { filesApi, publicCategoriesApi, type Category } from "@/lib/api"
@@ -183,21 +183,6 @@ export default function Header() {
 
           {/* Right Actions */}
           <div className="flex items-center gap-1.5">
-            {/* Search Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`hidden sm:flex h-8 w-8 transition-colors duration-300 ${
-                scrolled || !isHomePage
-                  ? "text-foreground/70 hover:text-[#556B2F] hover:bg-[#556B2F]/10"
-                  : "text-white/90 hover:text-white hover:bg-white/10"
-              }`}
-            >
-              <Search className={`w-4 h-4 ${
-                scrolled || !isHomePage ? "" : "drop-shadow-md"
-              }`} />
-            </Button>
-
             {/* Track Order */}
             <Link href="/track-order">
               <Button

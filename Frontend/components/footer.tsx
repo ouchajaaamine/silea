@@ -8,11 +8,16 @@ import { Button } from "@/components/ui/button"
 import { publicCategoriesApi, type Category } from "@/lib/api"
 import { useTranslation } from "@/lib/translation-context"
 import { useCategoryDialog } from "@/lib/category-dialog-context"
+import { PolicyModal } from "@/components/policy-modal"
 
 export default function Footer() {
   const { t, language } = useTranslation()
   const { openDialog } = useCategoryDialog()
   const [categories, setCategories] = useState<Category[]>([])
+  const [policyModal, setPolicyModal] = useState<{ type: "privacy" | "terms" | "cookies"; open: boolean }>({
+    type: "privacy",
+    open: false
+  })
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -87,7 +92,9 @@ export default function Footer() {
                 <Facebook className="w-4 h-4 text-muted-foreground group-hover:text-[#556B2F] transition-colors" />
               </a>
               <a
-                href="#"
+                href="https://www.instagram.com/silea__bio"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 rounded-xl glass-card flex items-center justify-center hover:bg-[#556B2F]/10 transition-all duration-300 group"
               >
                 <Instagram className="w-4 h-4 text-muted-foreground group-hover:text-[#556B2F] transition-colors" />
@@ -121,24 +128,6 @@ export default function Footer() {
                   </Link>
                 </li>
               ))}
-              <li>
-                <Link
-                  href="#"
-                  className="text-sm text-muted-foreground hover:text-[#556B2F] transition-colors duration-300 flex items-center gap-2 group"
-                >
-                  <span className="w-0 group-hover:w-2 h-px bg-[#D6A64F] transition-all duration-300" />
-                  {t.footer.giftSets}
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="text-sm text-muted-foreground hover:text-[#556B2F] transition-colors duration-300 flex items-center gap-2 group"
-                >
-                  <span className="w-0 group-hover:w-2 h-px bg-[#D6A64F] transition-all duration-300" />
-                  {t.footer.newArrivals}
-                </Link>
-              </li>
             </ul>
           </div>
 
@@ -146,24 +135,33 @@ export default function Footer() {
           <div>
             <h4 className="font-serif font-semibold text-lg mb-6 text-[#556B2F]">{t.footer.support}</h4>
             <ul className="space-y-3">
-              {[
-                { label: t.common.about, href: "/about" },
-                { label: t.common.contact, href: "/contact" },
-                { label: t.footer.trackOrder, href: "/track-order" },
-                { label: t.footer.shippingInfo, href: "#" },
-                { label: t.footer.returns, href: "#" },
-                { label: t.footer.faq, href: "#" },
-              ].map((link) => (
-                <li key={link.href + link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-muted-foreground hover:text-[#556B2F] transition-colors duration-300 flex items-center gap-2 group"
-                  >
-                    <span className="w-0 group-hover:w-2 h-px bg-[#D6A64F] transition-all duration-300" />
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+              <li>
+                <Link
+                  href="/about"
+                  className="text-sm text-muted-foreground hover:text-[#556B2F] transition-colors duration-300 flex items-center gap-2 group"
+                >
+                  <span className="w-0 group-hover:w-2 h-px bg-[#D6A64F] transition-all duration-300" />
+                  {t.common.about}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/contact"
+                  className="text-sm text-muted-foreground hover:text-[#556B2F] transition-colors duration-300 flex items-center gap-2 group"
+                >
+                  <span className="w-0 group-hover:w-2 h-px bg-[#D6A64F] transition-all duration-300" />
+                  {t.common.contact}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/track-order"
+                  className="text-sm text-muted-foreground hover:text-[#556B2F] transition-colors duration-300 flex items-center gap-2 group"
+                >
+                  <span className="w-0 group-hover:w-2 h-px bg-[#D6A64F] transition-all duration-300" />
+                  {t.footer.trackOrder}
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -192,13 +190,22 @@ export default function Footer() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">{t.common.phone}</p>
-                  <a
-                    href="tel:+212664389712"
-                    className="text-sm font-medium hover:text-[#556B2F] transition-colors"
-                    dir="ltr"
-                  >
-                    +212 664-389712
-                  </a>
+                  <div className="space-y-1">
+                    <a
+                      href="tel:+212664389712"
+                      className="block text-sm font-medium hover:text-[#556B2F] transition-colors"
+                      dir="ltr"
+                    >
+                      +212 664-389712
+                    </a>
+                    <a
+                      href="tel:+212538914939"
+                      className="block text-sm font-medium hover:text-[#556B2F] transition-colors"
+                      dir="ltr"
+                    >
+                      +212 538-914939
+                    </a>
+                  </div>
                 </div>
               </div>
 
@@ -214,19 +221,34 @@ export default function Footer() {
               {t.footer.copyright}
             </p>
             <div className="flex items-center gap-6 text-xs text-muted-foreground">
-              <a href="#" className="hover:text-[#556B2F] transition-colors">
+              <button 
+                onClick={() => setPolicyModal({ type: "privacy", open: true })}
+                className="hover:text-[#556B2F] transition-colors"
+              >
                 {t.footer.privacy}
-              </a>
-              <a href="#" className="hover:text-[#556B2F] transition-colors">
+              </button>
+              <button 
+                onClick={() => setPolicyModal({ type: "terms", open: true })}
+                className="hover:text-[#556B2F] transition-colors"
+              >
                 {t.footer.terms}
-              </a>
-              <a href="#" className="hover:text-[#556B2F] transition-colors">
+              </button>
+              <button 
+                onClick={() => setPolicyModal({ type: "cookies", open: true })}
+                className="hover:text-[#556B2F] transition-colors"
+              >
                 {t.footer.cookies}
-              </a>
+              </button>
             </div>
           </div>
         </div>
       </div>
+
+      <PolicyModal 
+        type={policyModal.type} 
+        open={policyModal.open} 
+        onOpenChange={(open) => setPolicyModal({ ...policyModal, open })}
+      />
     </footer>
   )
 }

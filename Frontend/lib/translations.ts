@@ -795,7 +795,7 @@ export const translations: Record<Language, Translations> = {
         },
         delivery: {
           question: 'How long does delivery take?',
-          answer: 'We deliver within 48 hours or less to most cities in Morocco. Express delivery is available for urgent orders.',
+          answer: 'Delivery takes between 24 to 72 hours to most cities in Morocco. We strive to get your order to you as quickly as possible.',
         },
         payment: {
           question: 'What payment methods do you accept?',
@@ -1254,7 +1254,7 @@ export const translations: Record<Language, Translations> = {
         },
         delivery: {
           question: 'Combien de temps prend la livraison ?',
-          answer: 'Nous livrons en 48 heures ou moins dans la plupart des villes du Maroc. La livraison express est disponible pour les commandes urgentes.',
+          answer: 'La livraison prend entre 24 et 72 heures dans la plupart des villes du Maroc. Nous nous efforçons de vous livrer votre commande le plus rapidement possible.',
         },
         payment: {
           question: 'Quels modes de paiement acceptez-vous ?',
@@ -1713,7 +1713,7 @@ export const translations: Record<Language, Translations> = {
         },
         delivery: {
           question: 'كم يستغرق التوصيل؟',
-          answer: 'نقوم بالتوصيل في غضون 48 ساعة أو أقل إلى معظم المدن في المغرب. التوصيل السريع متاح للطلبات العاجلة.',
+          answer: 'يستغرق التوصيل ما بين 24 إلى 72 ساعة إلى معظم المدن في المغرب. نسعى جاهدين لإيصال طلبك إليك في أسرع وقت ممكن.',
         },
         payment: {
           question: 'ما هي طرق الدفع المقبولة؟',
