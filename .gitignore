@@ -49,3 +49,10 @@ lerna-debug.log*
 .env.development.local
 .env.test.local
 .env.production.local
+.env.security
+
+# Security credentials
+nginx/**/.htpasswd
+*.pem
+*.key
+.env.production.local
