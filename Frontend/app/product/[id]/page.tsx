@@ -337,54 +337,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   </svg>
                 </div>
               </div>
-              
-              {/* Thumbnail Gallery */}
-              <div className="flex gap-3 overflow-x-auto pb-2">
-                {productImages.length > 0 ? (
-                  // Show actual product images
-                  productImages.map((img, i) => (
-                    <button
-                      key={img.id}
-                      onClick={() => setSelectedImage(i)}
-                      className={`relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all duration-300 group/thumb ${
-                        selectedImage === i
-                          ? "border-[#556B2F] shadow-lg ring-2 ring-[#556B2F]/20 scale-105"
-                          : "border-transparent opacity-70 hover:opacity-100 hover:border-[#D6A64F]/50"
-                      }`}
-                    >
-                      <img
-                        src={filesApi.getImageUrl(img.imageUrl)}
-                        alt={`${product.name} - ${i + 1}`}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover/thumb:scale-110"
-                      />
-                      {img.isPrimary && (
-                        <div className="absolute top-1 right-1 w-5 h-5 bg-[#D6A64F] rounded-full flex items-center justify-center">
-                          <Crown className="w-3 h-3 text-white" />
-                        </div>
-                      )}
-                    </button>
-                  ))
-                ) : (
-                  // Show placeholder thumbnails if no images array
-                  [0, 1, 2].map((i) => (
-                    <button
-                      key={i}
-                      onClick={() => setSelectedImage(i)}
-                      className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all duration-300 group/thumb ${
-                        selectedImage === i
-                          ? "border-[#556B2F] shadow-lg ring-2 ring-[#556B2F]/20"
-                          : "border-transparent opacity-70 hover:opacity-100 hover:border-[#D6A64F]/50"
-                      }`}
-                    >
-                      <img
-                        src={filesApi.getImageUrl(product.imageUrl) || "/placeholder.svg"}
-                        alt=""
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover/thumb:scale-110"
-                      />
-                    </button>
-                  ))
-                )}
-              </div>
             </div>
 
             {/* Product Info */}
