@@ -321,8 +321,6 @@ jobs:
             echo "📝 Creating docker-compose configuration..."
             cd ~/silea
             cat > docker-compose.yml <<'EOF'
-          version: '3.8'
-
           services:
             mysql:
               image: mysql:8.0
@@ -385,7 +383,7 @@ jobs:
             
             echo "📥 Pulling images and deploying..."
             docker-compose pull
-            docker-compose up -d
+            docker-compose up -d --remove-orphans
             
             echo "⏳ Waiting for services to be healthy..."
             sleep 45
