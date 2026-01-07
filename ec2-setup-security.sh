@@ -177,7 +177,9 @@ DOCKERCOMPOSE
 
 echo ""
 echo "🛑 Stopping old containers..."
-docker-compose down
+docker-compose down --remove-orphans 2>/dev/null || true
+docker stop silea-nginx-phpmyadmin silea-nginx-backend 2>/dev/null || true
+docker rm silea-nginx-phpmyadmin silea-nginx-backend 2>/dev/null || true
 
 echo ""
 echo "🚀 Starting secured containers..."
