@@ -21,8 +21,27 @@ spring:
   sql:
     init:
       mode: always
+  
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
 
 thirdparty:
   twilio:
     accountSid: "YOUR_TWILIO_ACCOUNT_SID"
     authToken: "YOUR_TWILIO_AUTH_TOKEN"
+
+# Monday.com Integration Configuration
+monday:
+  enabled: true
+  api-token: ${MONDAY_API_TOKEN:eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU5NjM5ODQxMCwiYWFpIjoxMSwidWlkIjo5NjgxOTM3OCwiaWFkIjoiMjAyNS0xMi0xMVQwMDozNjo0MS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6MzI2OTI2OTYsInJnbiI6ImV1YzEifQ.wvMLmqf5cFi7-IFmvLlLb0LNQgfCV-jaN5P5U_dpzog}
+  board-id: ${MONDAY_BOARD_ID:5088829162}
+  api-url: https://api.monday.com/v2
+
+# WhatsApp Integration Configuration
+whatsapp:
+  enabled: false
+  account-sid: ${WHATSAPP_ACCOUNT_SID:your-twilio-account-sid}
+  auth-token: ${WHATSAPP_AUTH_TOKEN:your-twilio-auth-token}
+  from-number: ${WHATSAPP_FROM_NUMBER:whatsapp:+14155238886}

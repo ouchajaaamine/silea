@@ -251,24 +251,20 @@ export default function Home() {
           <div className={`grid gap-8 mb-16 ${categories.length === 1 ? 'md:grid-cols-1 max-w-2xl mx-auto' : categories.length === 2 ? 'md:grid-cols-2' : categories.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2 lg:grid-cols-4'}`}>
             {categories.length > 0 ? (
               categories.map((category, index) => {
-                // Default images based on category name keywords
+                // Use local images from public folder
                 const getDefaultImage = (name: string) => {
                   const lowerName = name.toLowerCase()
                   if (lowerName.includes('honey') || lowerName.includes('عسل') || lowerName.includes('miel')) {
-                    return '/moroccan-thyme-honey-jar-premium.jpg'
+                    return '/honeyHomePage.png'
                   }
                   if (lowerName.includes('oil') || lowerName.includes('زيت') || lowerName.includes('huile')) {
-                    return '/premium-moroccan-olive-oil-bottle.jpg'
+                    return '/oliveOilHoePage.jpeg'
                   }
-                  if (lowerName.includes('amlou') || lowerName.includes('املو')) {
-                    return '/moroccan-amlou-spread.jpg'
-                  }
-                  return '/placeholder-category.jpg'
+                  return '/placeholder.jpg'
                 }
                 
-                const categoryImage = category.imageUrl 
-                  ? filesApi.getImageUrl(category.imageUrl)
-                  : getDefaultImage(category.name)
+                // Always use local images instead of fetching from API
+                const categoryImage = getDefaultImage(category.name)
                 
                 const categorySlug = category.slug || category.name.toLowerCase().replace(/\s+/g, '-')
                 

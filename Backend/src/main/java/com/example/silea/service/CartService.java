@@ -93,7 +93,116 @@ public class CartService {
     }
 
     /**
-     * Calculate shipping cost based on city
+     * Calculate shipping cost based on city and product category
+     * 
+     * FREE SHIPPING CONDITIONS:
+     *   - Cart total >= 700 MAD (any products)
+     *   - Oil products: 10L or more
+     * 
+     * For HONEY products:
+     *   - Tanger: 20 MAD
+     *   - Other cities: 35 MAD
+     * 
+     * For OIL products:
+     *   - Tanger, Casablanca, Beni Mellal, Mohammedia: 30 MAD
+     *   - Other cities: NOT AVAILABLE
+     * 
+     * Delivery time: 24-72h
+     */
+    public BigDecimal calculateShipping(String city, List<CartItem> items) {
+        if (city == null || city.trim().isEmpty()) {
+            return BigDecimal.valueOf(35); // Default
+        }
+        
+        // Calculate cart subtotal
+        BigDecimal subtotal = calculateTotal(items);
+        
+        // FREE SHIPPING: Cart total >= 700 MAD
+        if (subtotal.compareTo(BigDecimal.valueOf(700)) >= 0) {
+            return BigDecimal.ZERO;
+        }
+        
+        String normalizedCity = city.trim().toLowerCase();
+        
+        // Check if cart contains oil products and calculate total oil volume
+        double totalOilVolume = 0.0;
+        boolean hasOilProducts = false;
+        boolean hasHoneyProducts = false;
+        
+        for (CartItem item : items) {
+            String categoryName = item.getProduct().getCategory().getName().toLowerCase();
+            
+            if (categoryName.contains("oil") || categoryName.contains("huile") || categoryName.contains("زيت")) {
+                hasOilProducts = true;
+                
+                // Calculate oil volume from size
+                if (item.getSize() != null) {
+                    String sizeCode = item.getSize().getCode();
+                    double liters = 0.0;
+                    
+                    // Extract liters from size code (e.g., "OIL_250ML" = 0.25L, "OIL_5L" = 5L)
+                    if (sizeCode.contains("5L")) liters = 5.0;
+                    else if (sizeCode.contains("3L")) liters = 3.0;
+                    else if (sizeCode.contains("2L")) liters = 2.0;
+                    else if (sizeCode.contains("1L")) liters = 1.0;
+                    else if (sizeCode.contains("750ML")) liters = 0.75;
+                    else if (sizeCode.contains("500ML")) liters = 0.5;
+                    else if (sizeCode.contains("250ML")) liters = 0.25;
+                    
+                    totalOilVolume += liters * item.getQuantity();
+                }
+            }
+            
+            if (categoryName.contains("honey") || categoryName.contains("miel") || categoryName.contains("عسل")) {
+                hasHoneyProducts = true;
+            }
+        }
+        
+        // FREE SHIPPING: 10L or more of oil
+        if (hasOilProducts && totalOilVolume >= 10.0) {
+            return BigDecimal.ZERO;
+        }
+        
+        // Oil delivery cities (Tanger, Casablanca, Beni Mellal, Mohammedia)
+        boolean isOilDeliveryCity = normalizedCity.equals("tanger") || 
+                                   normalizedCity.equals("tangier") ||
+                                   normalizedCity.equals("طنجة") ||
+                                   normalizedCity.equals("casablanca") ||
+                                   normalizedCity.equals("الدار البيضاء") ||
+                                   normalizedCity.equals("beni mellal") ||
+                                   normalizedCity.equals("béni mellal") ||
+                                   normalizedCity.equals("بني ملال") ||
+                                   normalizedCity.equals("mohammedia") ||
+                                   normalizedCity.equals("المحمدية");
+        
+        // If cart has oil products and city is not in delivery list, return error indicator
+        if (hasOilProducts && !isOilDeliveryCity) {
+            return BigDecimal.valueOf(-1); // Error indicator: oil not deliverable
+        }
+        
+        // If only oil products or mixed cart in valid city
+        if (hasOilProducts && isOilDeliveryCity) {
+            return BigDecimal.valueOf(30); // 30 MAD for all oil delivery cities
+        }
+        
+        // Honey-only products: original logic
+        if (hasHoneyProducts && !hasOilProducts) {
+            // Tanger: 20 MAD
+            if (normalizedCity.equals("tanger") || 
+                normalizedCity.equals("tangier") || 
+                normalizedCity.equals("طنجة")) {
+                return BigDecimal.valueOf(20);
+            }
+            // Other cities: 35 MAD
+            return BigDecimal.valueOf(35);
+        }
+        
+        // Default
+        return BigDecimal.valueOf(35);
+    }
+    
+    /**
+     * Calculate shipping cost based on city only (for backward compatibility)
      * Tanger: 20 MAD
      * Other cities: 35 MAD
      * Delivery time: 24-72h

@@ -551,6 +551,30 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
 
             {/* Products Grid */}
             <div className="lg:col-span-4">
+              {/* Oil Products Delivery Notice - Inside products column */}
+              {category && (category.name.toLowerCase().includes('oil') || 
+                           category.name.toLowerCase().includes('huile') || 
+                           category.name.toLowerCase().includes('زيت')) && (
+                <div className="mb-6">
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 text-sm">
+                      <span className="font-medium text-amber-900">
+                        {language === 'ar' ? 'التوصيل:' : language === 'fr' ? 'Livraison:' : 'Delivery:'}
+                      </span>
+                      <span className="text-amber-800">
+                        {language === 'ar' ? 'طنجة • الدار البيضاء • بني ملال • المحمدية' : 
+                         'Tanger • Casablanca • Beni Mellal • Mohammedia'}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-xs font-semibold">30 MAD</span>
+                    </div>
+                  </div>
+                </div>
+              )}
               {/* Results Count & View Toggle */}
               <div className="flex items-center justify-between mb-6 p-4 bg-white rounded-xl border border-[#e9e6dd]">
                   <div className="flex flex-col gap-1">

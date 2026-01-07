@@ -178,10 +178,10 @@ export default function Footer() {
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">{t.common.email}</p>
                   <a
-                    href="mailto:contact@silea.com"
+                    href="mailto:official@siléa.com"
                     className="text-sm font-medium hover:text-[#556B2F] transition-colors"
                   >
-                    contact@silea.com
+                    official@siléa.com
                   </a>
                 </div>
               </div>
@@ -193,11 +193,11 @@ export default function Footer() {
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">{t.common.phone}</p>
                   <a
-                    href="tel:+212600000000"
+                    href="tel:+212664389712"
                     className="text-sm font-medium hover:text-[#556B2F] transition-colors"
                     dir="ltr"
                   >
-                    +212 6 00 00 00 00
+                    +212 664-389712
                   </a>
                 </div>
               </div>

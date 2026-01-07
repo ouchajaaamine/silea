@@ -26,7 +26,7 @@ public class WhatsAppMessageTemplates {
             "📦 *المنتجات المطلوبة:*\n%s\n\n" +
             "💰 *المبلغ الإجمالي:* %.2f درهم\n\n" +
             "🔍 *تتبع طلبك:*\n" +
-            "http://localhost:3000/track-order?code=%s\n\n" +
+            "http://51.44.37.35:3000/track-order?code=%s\n\n" +
             "سنبقيك على اطلاع بكل مستجدات طلبك 📲\n" +
             "شكراً لاختيارك سيليا 🙏🌿\n\n" +
             "━━━━━━━━━━━━━━━━━━━━\n\n" +
@@ -37,7 +37,7 @@ public class WhatsAppMessageTemplates {
             "📦 *Articles commandés:*\n%s\n\n" +
             "💰 *Total:* %.2f MAD\n\n" +
             "🔍 *Suivez votre commande:*\n" +
-            "http://localhost:3000/track-order?code=%s\n\n" +
+            "http://51.44.37.35:3000/track-order?code=%s\n\n" +
             "Nous vous tiendrons informé à chaque étape! 📲\n" +
             "Merci d'avoir choisi Silea 🙏🌿",
             customerName, orderNumber, itemsSummary, totalAmount, trackingCode,
@@ -62,7 +62,7 @@ public class WhatsAppMessageTemplates {
             "الحالة الجديدة: *%s*\n\n" +
             "%s\n\n" +
             "🔍 *تتبع طلبك:*\n" +
-            "http://localhost:3000/track-order?code=%s\n\n" +
+            "http://51.44.37.35:3000/track-order?code=%s\n\n" +
             "نحن دائماً في خدمتك! 🙏🌿\n\n" +
             "━━━━━━━━━━━━━━━━━━━━\n\n" +
             "🌟 *Bonjour %s!* 🌟\n\n" +
@@ -70,7 +70,7 @@ public class WhatsAppMessageTemplates {
             "Nouveau statut: *%s*\n\n" +
             "%s\n\n" +
             "🔍 *Suivez votre commande:*\n" +
-            "http://localhost:3000/track-order?code=%s\n\n" +
+            "http://51.44.37.35:3000/track-order?code=%s\n\n" +
             "Nous sommes toujours à votre service! 🙏🌿",
             customerName, statusEmoji, orderNumber, statusTextAr, statusDescAr, trackingCode,
             customerName, statusEmoji, orderNumber, statusTextFr, statusDescFr, trackingCode

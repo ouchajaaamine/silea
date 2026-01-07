@@ -45,7 +45,8 @@ public class OrderService {
      * Create a new order with full tracking initialization
      */
     public Order createOrder(Customer customer, List<OrderItem> items, String shippingAddress,
-                           String notes, LocalDateTime estimatedDelivery) {
+                           String notes, LocalDateTime estimatedDelivery,
+                           String shippingCity, BigDecimal shippingCost, BigDecimal subtotal) {
         Order order = new Order();
         order.setCustomer(customer);
         order.setOrderNumber(generateOrderNumber());
@@ -53,14 +54,15 @@ public class OrderService {
         order.setStatus(OrderStatus.PENDING);
         order.setOrderDate(LocalDateTime.now());
         order.setShippingAddress(shippingAddress);
+        order.setShippingCity(shippingCity);
+        order.setShippingCost(shippingCost);
+        order.setSubtotal(subtotal);
         order.setNotes(notes);
         order.setEstimatedDeliveryDate(estimatedDelivery != null ? estimatedDelivery : 
             LocalDateTime.now().plusDays(5)); // Default 5 days delivery
 
-        // Calculate total
-        BigDecimal total = items.stream()
-                .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // Calculate total (subtotal + shipping)
+        BigDecimal total = subtotal.add(shippingCost != null ? shippingCost : BigDecimal.ZERO);
         order.setTotal(total);
 
         // Set order reference in items

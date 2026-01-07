@@ -932,6 +932,7 @@ export const ordersApi = {
     customerName: string;
     customerEmail: string;
     customerPhone: string;
+    customerCity: string;
     shippingAddress: string;
     notes?: string;
     estimatedDeliveryDate?: string;

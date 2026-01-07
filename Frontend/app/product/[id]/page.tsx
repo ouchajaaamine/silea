@@ -448,14 +448,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 <span className="text-4xl font-serif font-bold text-[#D6A64F]">
                   {currentPrice.toFixed(2)} MAD
                 </span>
-                {selectedSize && (
-                  <>
-                    <span className="text-lg text-muted-foreground line-through">
-                      {Math.round(currentPrice * 1.15)} MAD
-                    </span>
-                    <Badge className="bg-[#556B2F]/10 text-[#556B2F]">{t.product.savePercent}</Badge>
-                  </>
-                )}
               </div>
 
               {/* Availability */}
@@ -501,7 +493,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               <div className="grid grid-cols-3 gap-4 pt-6 border-t border-[#556B2F]/10">
                 <div className="flex flex-col items-center text-center p-3 rounded-xl bg-[#556B2F]/5">
                   <Truck className="w-5 h-5 text-[#556B2F] mb-2" />
-                  <span className="text-xs text-muted-foreground">{t.product.freeShipping}</span>
+                  <span className="text-xs text-muted-foreground">24-72h</span>
                 </div>
                 <div className="flex flex-col items-center text-center p-3 rounded-xl bg-[#556B2F]/5">
                   <Shield className="w-5 h-5 text-[#556B2F] mb-2" />
@@ -512,6 +504,29 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   <span className="text-xs text-muted-foreground">{t.product.natural}</span>
                 </div>
               </div>
+              
+              {/* Oil Products - Delivery Cities Notice */}
+              {(product.category.name.toLowerCase().includes('oil') || 
+                product.category.name.toLowerCase().includes('huile') || 
+                product.category.name.toLowerCase().includes('زيت')) && (
+                <div className="mt-4 p-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200">
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      </svg>
+                    </div>
+                    <span className="text-amber-900">
+                      <span className="font-medium">
+                        {language === 'ar' ? 'التوصيل:' : language === 'fr' ? 'Livraison:' : 'Delivery:'}
+                      </span> 
+                      {language === 'ar' ? 'طنجة • الدار البيضاء • بني ملال • المحمدية' : 
+                       'Tanger • Casablanca • Beni Mellal • Mohammedia'}
+                      <span className="ml-2 px-2 py-0.5 rounded-full bg-amber-500 text-white text-xs font-semibold">30 MAD</span>
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

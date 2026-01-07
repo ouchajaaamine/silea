@@ -55,21 +55,47 @@ export default function CartPage() {
   const [showSuccessDialog, setShowSuccessDialog] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
   const [copied, setCopied] = useState(false)
-  const [showDebug, setShowDebug] = useState(false)
+  // Cart items are loaded from context
 
-  // Debug: Log cart items
-  useEffect(() => {
-    console.log('Cart Items:', items)
-    console.log('Total Items:', totalItems)
-    console.log('Subtotal:', subtotal)
-    if (typeof window !== 'undefined') {
-      const savedCart = localStorage.getItem('silea_cart')
-      console.log('LocalStorage Cart:', savedCart)
-    }
-  }, [items, totalItems, subtotal])
-
-  const [cityOption, setCityOption] = useState<"tangier" | "other" | "">("") // tangier or other
+  const [cityOption, setCityOption] = useState<"tangier" | "casablanca" | "benimellal" | "mohammedia" | "other" | "">("") 
   const [otherCityName, setOtherCityName] = useState("") // for when user selects "other"
+  
+  // Detect if cart has oil products
+  const hasOilProducts = items.some(item => {
+    const categoryName = item.product.category.name.toLowerCase()
+    return categoryName.includes('oil') || categoryName.includes('huile') || categoryName.includes('زيت')
+  })
+  
+  const hasHoneyProducts = items.some(item => {
+    const categoryName = item.product.category.name.toLowerCase()
+    return categoryName.includes('honey') || categoryName.includes('miel') || categoryName.includes('عسل')
+  })
+  
+  // Calculate total oil volume in liters
+  const totalOilVolume = items.reduce((total, item) => {
+    const categoryName = item.product.category.name.toLowerCase()
+    if (categoryName.includes('oil') || categoryName.includes('huile') || categoryName.includes('زيت')) {
+      const sizeCode = item.size.code
+      let liters = 0
+      
+      // Extract liters from size code
+      if (sizeCode.includes('5L')) liters = 5
+      else if (sizeCode.includes('3L')) liters = 3
+      else if (sizeCode.includes('2L')) liters = 2
+      else if (sizeCode.includes('1L')) liters = 1
+      else if (sizeCode.includes('750ML')) liters = 0.75
+      else if (sizeCode.includes('500ML')) liters = 0.5
+      else if (sizeCode.includes('250ML')) liters = 0.25
+      
+      return total + (liters * item.quantity)
+    }
+    return total
+  }, 0)
+  
+  // Check free shipping conditions
+  const isFreeShippingByAmount = subtotal >= 700
+  const isFreeShippingByOilVolume = hasOilProducts && totalOilVolume >= 10
+  const isFreeShipping = isFreeShippingByAmount || isFreeShippingByOilVolume
   
   const [formData, setFormData] = useState({
     customerName: "",
@@ -84,22 +110,45 @@ export default function CartPage() {
     cost: number;
     deliveryTime: string;
   }>({
-    cost: 35, // Default to other cities
+    cost: hasOilProducts ? 30 : 35, // Oil: 30 MAD, Honey: 35 MAD default
     deliveryTime: "24-72h"
   })
 
   // Update formData.customerCity based on cityOption
   useEffect(() => {
+    let shippingCost = 0
+    
     if (cityOption === "tangier") {
       setFormData(prev => ({ ...prev, customerCity: "Tanger" }))
-      setShippingInfo({ cost: 20, deliveryTime: "24-72h" })
+      // Check free shipping first
+      if (isFreeShipping) {
+        shippingCost = 0
+      } else {
+        // Oil products: 30 MAD, Honey: 20 MAD
+        shippingCost = hasOilProducts ? 30 : 20
+      }
+      setShippingInfo({ cost: shippingCost, deliveryTime: "24-72h" })
+    } else if (cityOption === "casablanca") {
+      setFormData(prev => ({ ...prev, customerCity: "Casablanca" }))
+      shippingCost = isFreeShipping ? 0 : 30
+      setShippingInfo({ cost: shippingCost, deliveryTime: "24-72h" })
+    } else if (cityOption === "benimellal") {
+      setFormData(prev => ({ ...prev, customerCity: "Beni Mellal" }))
+      shippingCost = isFreeShipping ? 0 : 30
+      setShippingInfo({ cost: shippingCost, deliveryTime: "24-72h" })
+    } else if (cityOption === "mohammedia") {
+      setFormData(prev => ({ ...prev, customerCity: "Mohammedia" }))
+      shippingCost = isFreeShipping ? 0 : 30
+      setShippingInfo({ cost: shippingCost, deliveryTime: "24-72h" })
     } else if (cityOption === "other" && otherCityName.trim()) {
       setFormData(prev => ({ ...prev, customerCity: otherCityName }))
-      setShippingInfo({ cost: 35, deliveryTime: "24-72h" })
+      // Oil products NOT allowed in other cities
+      shippingCost = isFreeShipping ? 0 : 35
+      setShippingInfo({ cost: shippingCost, deliveryTime: "24-72h" })
     } else {
       setFormData(prev => ({ ...prev, customerCity: "" }))
     }
-  }, [cityOption, otherCityName])
+  }, [cityOption, otherCityName, hasOilProducts, isFreeShipping])
 
   const shipping = shippingInfo.cost
   const total = subtotal + shipping
@@ -143,6 +192,8 @@ export default function CartPage() {
       newErrors.customerCity = "Please select a shipping option"
     } else if (cityOption === "other" && !otherCityName.trim()) {
       newErrors.customerCity = "Please enter your city name"
+    } else if (!formData.customerCity || formData.customerCity.trim() === '') {
+      newErrors.customerCity = "City name is required"
     }
 
     setErrors(newErrors)
@@ -151,29 +202,49 @@ export default function CartPage() {
 
   const handleContinueToPayment = () => {
     if (validateForm()) {
+      // Double-check that customerCity is populated before proceeding
+      if (!formData.customerCity || formData.customerCity.trim() === '') {
+        toast.error("Please wait for city selection to complete")
+        return
+      }
       setStep("payment")
     } else {
       toast.error("Please fill in all required fields")
     }
-    }
+  }
 
   const handleCheckout = async () => {
     try {
       setLoading(true)
 
+      // Extra validation to ensure city is not empty
+      if (!formData.customerCity || formData.customerCity.trim() === '') {
+        console.error('Checkout validation failed - customerCity is empty:', {
+          formData,
+          cityOption,
+          otherCityName
+        })
+        toast.error("Please select a delivery city")
+        setLoading(false)
+        setStep("info")
+        return
+      }
+
       const orderData = {
-        customerName: formData.customerName,
-        customerEmail: formData.customerEmail,
-        customerPhone: formData.customerPhone,
-        shippingAddress: formData.shippingAddress,
-        customerCity: formData.customerCity,
-        notes: formData.notes,
+        customerName: formData.customerName.trim(),
+        customerEmail: formData.customerEmail.trim(),
+        customerPhone: formData.customerPhone.trim(),
+        shippingAddress: formData.shippingAddress.trim(),
+        customerCity: formData.customerCity.trim(),
+        notes: formData.notes.trim(),
         items: items.map((item) => ({
           productId: item.product.id,
           quantity: item.quantity,
           size: item.size.code,
         })),
       }
+
+      console.log('Sending order data:', orderData)
 
       const response = await ordersApi.create(orderData)
 
@@ -290,34 +361,6 @@ export default function CartPage() {
                   {t.cart.title}
                 </h1>
                 <p className="text-[#556B2F]/60 text-lg">{t.cart.subtitle}</p>
-                
-                {/* Debug Info - Remove in production */}
-                <div className="mt-4 flex items-center justify-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowDebug(!showDebug)}
-                    className="text-xs border-[#556B2F]/20"
-                  >
-                    {showDebug ? 'Hide' : 'Show'} Debug Info
-                  </Button>
-                </div>
-                
-                {showDebug && (
-                  <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-left max-w-2xl mx-auto text-xs">
-                    <p className="font-semibold mb-2">Cart Debug Information:</p>
-                    <p><strong>Items Count:</strong> {items.length}</p>
-                    <p><strong>Total Items (quantity):</strong> {totalItems}</p>
-                    <p><strong>Subtotal:</strong> {subtotal.toFixed(2)} MAD</p>
-                    <p><strong>Items in Cart:</strong></p>
-                    <pre className="mt-2 p-2 bg-white rounded overflow-auto max-h-40 text-[10px]">
-                      {JSON.stringify(items, null, 2)}
-                    </pre>
-                    {typeof window !== 'undefined' && (
-                      <p className="mt-2"><strong>LocalStorage:</strong> {localStorage.getItem('silea_cart') || 'Empty'}</p>
-                    )}
-                  </div>
-                )}
               </div>
 
               {items.length === 0 ? (
@@ -363,14 +406,31 @@ export default function CartPage() {
                           <div className="flex flex-col">
                             <span className="text-[#556B2F]/70 font-medium">{t.common.shipping}</span>
                             {!formData.customerCity && (
-                              <span className="text-xs text-[#556B2F]/50">{t.cart.shippingDetails.shippingDependsOnCity}</span>
+                              <span className="text-xs text-[#556B2F]/50">
+                                {hasOilProducts && !hasHoneyProducts && "30 MAD (4 villes)"}
+                                {!hasOilProducts && hasHoneyProducts && "20-35 MAD"}
+                                {hasOilProducts && hasHoneyProducts && "Selon la ville"}
+                              </span>
                             )}
-                            {formData.customerCity && (
+                            {formData.customerCity && isFreeShipping && (
+                              <span className="text-xs text-green-600 font-medium">
+                                {isFreeShippingByAmount && "✓ Commande > 700 MAD"}
+                                {isFreeShippingByOilVolume && !isFreeShippingByAmount && "✓ Huile > 10L"}
+                              </span>
+                            )}
+                            {formData.customerCity && !isFreeShipping && (
                               <span className="text-xs text-[#556B2F]/50">{shippingInfo.deliveryTime}</span>
                             )}
                           </div>
-                          <span className="font-semibold text-[#556B2F]">
-                            {formData.customerCity ? `${shipping.toFixed(2)} MAD` : '-'}
+                          <span className={`font-semibold ${isFreeShipping && formData.customerCity ? 'text-green-600' : 'text-[#556B2F]'}`}>
+                            {!formData.customerCity && '-'}
+                            {formData.customerCity && isFreeShipping && (
+                              <span className="flex items-center gap-1">
+                                <Sparkles className="w-4 h-4" />
+                                GRATUIT
+                              </span>
+                            )}
+                            {formData.customerCity && !isFreeShipping && `${shipping.toFixed(2)} MAD`}
                           </span>
                         </div>
                         
@@ -491,7 +551,6 @@ export default function CartPage() {
                                 
                                 {/* Price */}
                                 <div className="text-right">
-                                  <p className="text-xs text-[#556B2F]/50 mb-1">{item.unitPrice.toFixed(2)} MAD each</p>
                                   <p className="text-2xl font-serif font-bold bg-gradient-to-r from-[#D6A64F] to-[#E8B960] bg-clip-text text-transparent">
                                   {(item.unitPrice * item.quantity).toFixed(2)} MAD
                                   </p>
@@ -624,13 +683,75 @@ export default function CartPage() {
                         )}
                       </div>
                       <div className="space-y-3">
-                        <Label className="text-[#556B2F] font-medium">
+                        <Label className="text-[#556B2F] font-medium flex items-center gap-2">
                           {t.cart.shippingDetails.city} <span className="text-red-500">{t.cart.labels.required}</span>
+                          {hasOilProducts && (
+                            <span className="ml-2 text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full">
+                              🛢️ Livraison huile limitée
+                            </span>
+                          )}
                         </Label>
+                        
+                        {/* Free shipping progress banner */}
+                        {!isFreeShipping && (
+                          <>
+                            {/* Show if close to 700 MAD threshold */}
+                            {subtotal >= 500 && subtotal < 700 && (
+                              <div className="p-3 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200">
+                                <p className="text-sm text-green-900 flex items-center gap-2">
+                                  <Sparkles className="w-4 h-4 text-green-600" />
+                                  <span className="font-medium">Ajoutez {(700 - subtotal).toFixed(2)} MAD pour bénéficier de la livraison gratuite! 🎉</span>
+                                </p>
+                              </div>
+                            )}
+                            
+                            {/* Show if close to 10L oil threshold */}
+                            {hasOilProducts && totalOilVolume >= 7 && totalOilVolume < 10 && (
+                              <div className="p-3 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200">
+                                <p className="text-sm text-green-900 flex items-center gap-2">
+                                  <Sparkles className="w-4 h-4 text-green-600" />
+                                  <span className="font-medium">Ajoutez {(10 - totalOilVolume).toFixed(1)}L d'huile pour bénéficier de la livraison gratuite! 🎉</span>
+                                </p>
+                              </div>
+                            )}
+                          </>
+                        )}
+                        
+                        {/* Free shipping achieved banner */}
+                        {isFreeShipping && (
+                          <div className="p-4 rounded-lg bg-gradient-to-r from-green-100 to-emerald-100 border-2 border-green-300">
+                            <p className="text-base text-green-900 font-semibold flex items-center gap-2">
+                              <Sparkles className="w-5 h-5 text-green-600" />
+                              <span>✓ Félicitations! Livraison gratuite activée! 🎉</span>
+                            </p>
+                            <p className="text-xs text-green-800 mt-1 ml-7">
+                              {isFreeShippingByAmount && "Commande supérieure à 700 MAD"}
+                              {isFreeShippingByOilVolume && !isFreeShippingByAmount && `Plus de 10L d'huile (${totalOilVolume.toFixed(1)}L)`}
+                            </p>
+                          </div>
+                        )}
+                        
+                        {/* Info banner for oil products */}
+                        {hasOilProducts && (
+                          <div className="p-3 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200">
+                            <p className="text-sm text-amber-900 flex items-center gap-2">
+                              <Sparkles className="w-4 h-4 text-amber-600" />
+                              <span className="font-medium">
+                                {language === 'ar' ? 'زيت الزيتون متاح فقط في:' : 
+                                 language === 'fr' ? 'Les huiles d\'olive sont disponibles uniquement à:' : 
+                                 'Olive oils available only in:'}
+                              </span>
+                            </p>
+                            <p className="text-xs text-amber-800 mt-1 ml-6">
+                              {language === 'ar' ? 'طنجة، الدار البيضاء، بني ملال، المحمدية' : 
+                               'Tanger, Casablanca, Beni Mellal, Mohammedia'}
+                            </p>
+                          </div>
+                        )}
                         
                         <RadioGroup
                           value={cityOption}
-                          onValueChange={(value: "tangier" | "other") => {
+                          onValueChange={(value: "tangier" | "casablanca" | "benimellal" | "mohammedia" | "other") => {
                             setCityOption(value)
                             if (errors.customerCity) {
                               setErrors({ ...errors, customerCity: undefined })
@@ -644,31 +765,114 @@ export default function CartPage() {
                             <Label htmlFor="tangier" className="flex-1 cursor-pointer">
                               <div className="flex items-center justify-between">
                                 <div>
-                                  <div className="font-medium text-[#556B2F]">{t.cart.shippingDetails.cityTangier}</div>
+                                  <div className="font-medium text-[#556B2F] flex items-center gap-2">
+                                    {t.cart.shippingDetails.cityTangier}
+                                    {hasOilProducts && <span className="text-xs text-amber-600">✓ Huile</span>}
+                                  </div>
                                   <div className="text-xs text-[#556B2F]/60">Livraison: 24-72h</div>
                                 </div>
-                                <div className="text-lg font-bold text-[#D6A64F]">20 MAD</div>
+                                <div className="text-lg font-bold text-[#D6A64F]">
+                                  {hasOilProducts ? '30' : '20'} MAD
+                                </div>
                               </div>
                             </Label>
                           </div>
+                          
+                          {/* Casablanca Option - Only show for oil products */}
+                          {hasOilProducts && (
+                            <div className="flex items-center space-x-3 p-4 rounded-lg border-2 border-[#556B2F]/10 hover:border-[#556B2F]/30 transition-colors bg-white">
+                              <RadioGroupItem value="casablanca" id="casablanca" className="text-[#556B2F]" />
+                              <Label htmlFor="casablanca" className="flex-1 cursor-pointer">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <div className="font-medium text-[#556B2F] flex items-center gap-2">
+                                      Casablanca
+                                      <span className="text-xs text-amber-600">✓ Huile</span>
+                                    </div>
+                                    <div className="text-xs text-[#556B2F]/60">Livraison: 24-72h</div>
+                                  </div>
+                                  <div className="text-lg font-bold text-[#D6A64F]">30 MAD</div>
+                                </div>
+                              </Label>
+                            </div>
+                          )}
+                          
+                          {/* Beni Mellal Option - Only show for oil products */}
+                          {hasOilProducts && (
+                            <div className="flex items-center space-x-3 p-4 rounded-lg border-2 border-[#556B2F]/10 hover:border-[#556B2F]/30 transition-colors bg-white">
+                              <RadioGroupItem value="benimellal" id="benimellal" className="text-[#556B2F]" />
+                              <Label htmlFor="benimellal" className="flex-1 cursor-pointer">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <div className="font-medium text-[#556B2F] flex items-center gap-2">
+                                      Beni Mellal
+                                      <span className="text-xs text-amber-600">✓ Huile</span>
+                                    </div>
+                                    <div className="text-xs text-[#556B2F]/60">Livraison: 24-72h</div>
+                                  </div>
+                                  <div className="text-lg font-bold text-[#D6A64F]">30 MAD</div>
+                                </div>
+                              </Label>
+                            </div>
+                          )}
+                          
+                          {/* Mohammedia Option - Only show for oil products */}
+                          {hasOilProducts && (
+                            <div className="flex items-center space-x-3 p-4 rounded-lg border-2 border-[#556B2F]/10 hover:border-[#556B2F]/30 transition-colors bg-white">
+                              <RadioGroupItem value="mohammedia" id="mohammedia" className="text-[#556B2F]" />
+                              <Label htmlFor="mohammedia" className="flex-1 cursor-pointer">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <div className="font-medium text-[#556B2F] flex items-center gap-2">
+                                      Mohammedia
+                                      <span className="text-xs text-amber-600">✓ Huile</span>
+                                    </div>
+                                    <div className="text-xs text-[#556B2F]/60">Livraison: 24-72h</div>
+                                  </div>
+                                  <div className="text-lg font-bold text-[#D6A64F]">30 MAD</div>
+                                </div>
+                              </Label>
+                            </div>
+                          )}
 
-                          {/* Other City Option */}
-                          <div className="flex items-center space-x-3 p-4 rounded-lg border-2 border-[#556B2F]/10 hover:border-[#556B2F]/30 transition-colors bg-white">
-                            <RadioGroupItem value="other" id="other" className="text-[#556B2F]" />
-                            <Label htmlFor="other" className="flex-1 cursor-pointer">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <div className="font-medium text-[#556B2F]">{t.cart.shippingDetails.cityOther}</div>
-                                  <div className="text-xs text-[#556B2F]/60">Livraison: 24-72h</div>
+                          {/* Other City Option - Only for honey products or show disabled for oil */}
+                          {!hasOilProducts && (
+                            <div className="flex items-center space-x-3 p-4 rounded-lg border-2 border-[#556B2F]/10 hover:border-[#556B2F]/30 transition-colors bg-white">
+                              <RadioGroupItem value="other" id="other" className="text-[#556B2F]" />
+                              <Label htmlFor="other" className="flex-1 cursor-pointer">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <div className="font-medium text-[#556B2F]">{t.cart.shippingDetails.cityOther}</div>
+                                    <div className="text-xs text-[#556B2F]/60">Livraison: 24-72h</div>
+                                  </div>
+                                  <div className="text-lg font-bold text-[#D6A64F]">35 MAD</div>
                                 </div>
-                                <div className="text-lg font-bold text-[#D6A64F]">35 MAD</div>
-                              </div>
-                            </Label>
-                          </div>
+                              </Label>
+                            </div>
+                          )}
+                          
+                          {/* Disabled other cities notice for oil */}
+                          {hasOilProducts && (
+                            <div className="flex items-center space-x-3 p-4 rounded-lg border-2 border-gray-200 bg-gray-50 opacity-60">
+                              <RadioGroupItem value="other" id="other-disabled" disabled className="text-gray-400" />
+                              <Label htmlFor="other-disabled" className="flex-1 cursor-not-allowed">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <div className="font-medium text-gray-500 flex items-center gap-2">
+                                      {t.cart.shippingDetails.cityOther}
+                                      <span className="text-xs text-red-600">✗ Huile indisponible</span>
+                                    </div>
+                                    <div className="text-xs text-gray-400">Non disponible pour les huiles</div>
+                                  </div>
+                                  <div className="text-lg font-bold text-gray-400 line-through">35 MAD</div>
+                                </div>
+                              </Label>
+                            </div>
+                          )}
                         </RadioGroup>
 
-                        {/* Show city input when "other" is selected */}
-                        {cityOption === "other" && (
+                        {/* Show city input when "other" is selected (honey only) */}
+                        {cityOption === "other" && !hasOilProducts && (
                           <div className="ml-9 mt-3">
                             <Input
                               placeholder={t.cart.placeholders.city}
@@ -719,11 +923,26 @@ export default function CartPage() {
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex flex-col">
                         <span className="text-[#556B2F]/80 text-sm">{t.common.shipping}</span>
-                        {formData.customerCity && (
+                        {formData.customerCity && isFreeShipping && (
+                          <span className="text-xs text-green-600 font-medium">
+                            {isFreeShippingByAmount && "✓ Commande > 700 MAD"}
+                            {isFreeShippingByOilVolume && !isFreeShippingByAmount && "✓ Huile > 10L"}
+                          </span>
+                        )}
+                        {formData.customerCity && !isFreeShipping && (
                           <span className="text-xs text-[#556B2F]/50">{shippingInfo.deliveryTime}</span>
                         )}
                       </div>
-                      <span className="text-[#556B2F] font-medium">{shipping.toFixed(2)} MAD</span>
+                      <span className={`font-medium ${isFreeShipping ? 'text-green-600' : 'text-[#556B2F]'}`}>
+                        {isFreeShipping ? (
+                          <span className="flex items-center gap-1">
+                            <Sparkles className="w-4 h-4" />
+                            GRATUIT
+                          </span>
+                        ) : (
+                          `${shipping.toFixed(2)} MAD`
+                        )}
+                      </span>
                     </div>
                     <Separator className="my-3" />
                     <div className="flex items-center justify-between">
@@ -857,9 +1076,25 @@ export default function CartPage() {
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex flex-col">
                         <span className="text-[#556B2F]/80">{t.common.shipping}</span>
-                        <span className="text-xs text-[#556B2F]/50">{shippingInfo.deliveryTime}</span>
+                        {isFreeShipping ? (
+                          <span className="text-xs text-green-600 font-medium">
+                            {isFreeShippingByAmount && "✓ Commande > 700 MAD"}
+                            {isFreeShippingByOilVolume && !isFreeShippingByAmount && "✓ Huile > 10L"}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-[#556B2F]/50">{shippingInfo.deliveryTime}</span>
+                        )}
                       </div>
-                      <span className="text-[#556B2F]">{shipping.toFixed(2)} MAD</span>
+                      <span className={`${isFreeShipping ? 'text-green-600 font-semibold' : 'text-[#556B2F]'}`}>
+                        {isFreeShipping ? (
+                          <span className="flex items-center gap-1">
+                            <Sparkles className="w-4 h-4" />
+                            GRATUIT
+                          </span>
+                        ) : (
+                          `${shipping.toFixed(2)} MAD`
+                        )}
+                      </span>
                     </div>
                     <Separator className="my-3" />
                     <div className="flex items-center justify-between">

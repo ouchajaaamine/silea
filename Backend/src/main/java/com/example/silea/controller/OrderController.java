@@ -211,19 +211,17 @@ public class OrderController {
             // Calculate total with shipping
             BigDecimal orderTotal = subtotal.add(shippingCost);
 
-            // Create order
+            // Create order with all shipping information
             Order order = orderService.createOrder(
                 customer,
                 orderItems,
                 request.getShippingAddress(),
                 request.getNotes(),
-                request.getEstimatedDeliveryDate()
+                request.getEstimatedDeliveryDate(),
+                request.getCustomerCity(),
+                shippingCost,
+                subtotal
             );
-            
-            // Set shipping information
-            order.setShippingCity(request.getCustomerCity());
-            order.setShippingCost(shippingCost);
-            order.setSubtotal(subtotal);
 
             // Build detailed response
             Map<String, Object> response = new HashMap<>();

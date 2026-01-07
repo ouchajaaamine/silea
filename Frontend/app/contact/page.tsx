@@ -19,15 +19,15 @@ export default function Contact() {
     {
       icon: Mail,
       title: t.contact.info.email,
-      value: "contact@silea.com",
-      href: "mailto:contact@silea.com",
+      value: "official@siléa.com",
+      href: "mailto:official@siléa.com",
       description: t.contact.form.successMessage,
     },
     {
       icon: MessageCircle,
       title: t.contact.whatsapp,
-      value: "+212 6 00 00 00 00",
-      href: "https://wa.me/212600000000",
+      value: "+212 664-389712",
+      href: "https://wa.me/212664389712",
       description: "Chat instantly",
       isPhone: true,
     },
@@ -91,7 +91,7 @@ export default function Contact() {
                       <info.icon className="w-5 h-5 text-[#556B2F]" />
                     </div>
                     <h3 className="font-serif text-base font-bold mb-1">{info.title}</h3>
-                    <p className="text-sm font-medium text-[#556B2F] group-hover:text-[#D6A64F] transition-colors" dir="ltr">
+                    <p className="text-sm font-medium text-[#556B2F] group-hoveAr:text-[#D6A64F] transition-colors" dir="ltr">
                       {info.value}
                     </p>
                   </CardContent>
@@ -142,7 +142,7 @@ export default function Contact() {
                 </p>
                 <div className="flex flex-wrap gap-3 justify-center">
                   <a
-                    href="https://wa.me/212600000000"
+                    href="https://wa.me/212664389712"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#25D366] hover:bg-[#20BA5A] text-white rounded-lg transition-colors text-sm"
@@ -151,7 +151,7 @@ export default function Contact() {
                     <span>WhatsApp</span>
                   </a>
                   <a
-                    href="mailto:contact@silea.ma"
+                    href="mailto:official@siléa.com"
                     className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#556B2F] hover:bg-[#6B8E3C] text-white rounded-lg transition-colors text-sm"
                   >
                     <Mail className="w-4 h-4" />

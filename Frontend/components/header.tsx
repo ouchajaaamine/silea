@@ -364,7 +364,9 @@ export default function Header() {
                       <div className="flex justify-between text-sm">
                         <span className="text-[#556B2F]/60">{t.common.shipping}</span>
                         <span className="text-[#556B2F] text-xs">
-                          {t.cart.shippingDetails.shippingDependsOnCity}
+                          {language === 'ar' ? 'يحسب في السلة' : 
+                           language === 'fr' ? 'Calculé au panier' : 
+                           'Calculated at cart'}
                         </span>
                       </div>
                       <Separator className="bg-[#556B2F]/10 my-2" />
