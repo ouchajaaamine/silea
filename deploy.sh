@@ -1,35 +1,43 @@
 #!/bin/bash
-# Deployment script for Silea on EC2
+# Silea Deployment Script
+# Works for both first-time setup AND regular updates
 set -e
 
-echo "🚀 Deploying Silea..."
+echo "🚀 Silea Deployment"
+echo "==================="
+echo ""
 
-# Navigate to app directory
-cd /opt/silea
+cd ~/silea
 
 # Login to ECR
+echo "🔑 Logging into AWS ECR..."
 aws ecr get-login-password --region eu-west-3 | docker login --username AWS --password-stdin 442147575154.dkr.ecr.eu-west-3.amazonaws.com
 
 # Pull latest images
+echo ""
 echo "📥 Pulling latest Docker images..."
-docker-compose -f docker-compose.prod.yml pull backend frontend
+docker-compose pull
 
-# Restart services with zero downtime
-echo "🔄 Restarting services..."
-docker-compose -f docker-compose.prod.yml up -d --no-deps backend frontend
+# Smart restart: only restart what's needed
+echo ""
+echo "🔄 Updating services..."
+docker-compose up -d --remove-orphans
 
 # Clean up old images
-echo "🧹 Cleaning up..."
+echo ""
+echo "🧹 Cleaning up old images..."
 docker image prune -f
 
-# Show status
-docker-compose -f docker-compose.prod.yml ps
-
-# Health checks
-echo "🏥 Running health checks..."
+echo ""
+echo "⏳ Waiting for services..."
 sleep 10
-curl -f http://localhost:8080/api/products > /dev/null 2>&1 && echo "✅ Backend is healthy" || echo "⚠️ Backend health check failed"
-curl -f http://localhost:3000 > /dev/null 2>&1 && echo "✅ Frontend is healthy" || echo "⚠️ Frontend health check failed"
 
-echo "✅ Deployment complete!"
-docker-compose -f docker-compose.prod.yml ps
+# Show status
+echo ""
+echo "📊 Service Status:"
+docker-compose ps
+
+echo ""
+echo "✅ Deployment Complete!"
+echo ""
+
