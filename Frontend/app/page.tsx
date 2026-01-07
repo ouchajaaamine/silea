@@ -1,5 +1,6 @@
 "use client"
 
+// Updated for EC2 t4g.small deployment
 import { useState, useEffect } from "react"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
