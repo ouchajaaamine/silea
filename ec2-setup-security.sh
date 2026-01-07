@@ -177,13 +177,13 @@ DOCKERCOMPOSE
 
 echo ""
 echo "🛑 Stopping old containers..."
+docker stop $(docker ps -aq) 2>/dev/null || true
+docker rm $(docker ps -aq) 2>/dev/null || true
 docker-compose down --remove-orphans 2>/dev/null || true
-docker stop silea-nginx-phpmyadmin silea-nginx-backend 2>/dev/null || true
-docker rm silea-nginx-phpmyadmin silea-nginx-backend 2>/dev/null || true
 
 echo ""
 echo "🚀 Starting secured containers..."
-docker-compose up -d
+docker-compose up -d --remove-orphans
 
 echo ""
 echo "⏳ Waiting for services..."
