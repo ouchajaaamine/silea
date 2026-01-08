@@ -244,7 +244,7 @@ jobs:
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
           build-args: |
-            NEXT_PUBLIC_API_URL=https://xn--sila-dpa.com/api
+            NEXT_PUBLIC_API_URL=https://xn--sila-dpa.com
           no-cache: true
 
   # ============================================
@@ -358,7 +358,7 @@ jobs:
               image: 442147575154.dkr.ecr.eu-west-3.amazonaws.com/silea-frontend:latest
               container_name: silea-frontend
               environment:
-                NEXT_PUBLIC_API_URL: https://xn--sila-dpa.com/api
+                NEXT_PUBLIC_API_URL: https://xn--sila-dpa.com
               ports:
                 - "3000:3000"
               depends_on:

@@ -34,7 +34,7 @@ services:
     build:
       context: ./Frontend
       args:
-        NEXT_PUBLIC_API_URL: https://xn--sila-dpa.com/api
+        NEXT_PUBLIC_API_URL: https://xn--sila-dpa.com
     container_name: silea-frontend
     ports:
       - "3000:3000"
