@@ -31,7 +31,7 @@ import { ordersApi, trackingApi, type OrderDetailResponse, type TrackingRecord, 
 import { toast } from "sonner"
 import { useTranslation } from "@/lib/translation-context"
 
-const orderSteps: OrderStatus[] = ["PENDING", "CONFIRMED", "PROCESSING", "SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED"]
+const orderSteps: OrderStatus[] = ["PENDING", "CONFIRMED", "PROCESSING", "IN_TRANSIT", "OUT_FOR_DELIVERY", "DELIVERED"]
 
 function TrackOrderContent() {
   const { t } = useTranslation()

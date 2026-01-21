@@ -7,7 +7,8 @@ import org.springframework.stereotype.Component;
 public class EmailMessageTemplates {
     
     private static final String BUSINESS_NAME = "Silea";
-    private static final String BUSINESS_LOGO = "http://51.44.37.35:3000/logo.png";
+    private static final String BUSINESS_LOGO = "https://xn--sila-dpa.com/logo.png";
+    private static final String TRACKING_URL = "https://xn--sila-dpa.com/track-order";
     
     /**
      * Get HTML email header
@@ -100,7 +101,7 @@ public class EmailMessageTemplates {
                         
                         <div class="section-title">🔍 تتبع طلبك</div>
                         <div style="text-align: center;">
-                            <a href="http://51.44.37.35:3000/track-order?code=%s" class="button">
+                            <a href="https://xn--sila-dpa.com/track-order?code=%s" class="button">
                                 تتبع الطلب الآن
                             </a>
                             <p style="font-size: 12px; color: #666;">رمز التتبع: %s</p>
@@ -131,7 +132,7 @@ public class EmailMessageTemplates {
                         
                         <div class="section-title">🔍 Suivez votre commande</div>
                         <div style="text-align: center;">
-                            <a href="http://51.44.37.35:3000/track-order?code=%s" class="button">
+                            <a href="https://xn--sila-dpa.com/track-order?code=%s" class="button">
                                 Suivre maintenant
                             </a>
                             <p style="font-size: 12px; color: #666;">Code de suivi: %s</p>
@@ -190,7 +191,7 @@ public class EmailMessageTemplates {
                         </p>
                         
                         <div style="text-align: center; margin: 20px 0;">
-                            <a href="http://51.44.37.35:3000/track-order?code=%s" class="button">
+                            <a href="https://xn--sila-dpa.com/track-order?code=%s" class="button">
                                 🔍 تتبع طلبك
                             </a>
                         </div>
@@ -217,7 +218,7 @@ public class EmailMessageTemplates {
                         </p>
                         
                         <div style="text-align: center; margin: 20px 0;">
-                            <a href="http://51.44.37.35:3000/track-order?code=%s" class="button">
+                            <a href="https://xn--sila-dpa.com/track-order?code=%s" class="button">
                                 🔍 Suivre votre commande
                             </a>
                         </div>
@@ -269,7 +270,7 @@ public class EmailMessageTemplates {
                         </div>
                         
                         <div style="text-align: center; margin: 25px 0;">
-                            <a href="http://51.44.37.35:3000/track-order" class="button">
+                            <a href="https://xn--sila-dpa.com/track-order" class="button">
                                 🔍 تتبع طلبك الآن
                             </a>
                         </div>
@@ -297,7 +298,7 @@ public class EmailMessageTemplates {
                         </div>
                         
                         <div style="text-align: center; margin: 25px 0;">
-                            <a href="http://51.44.37.35:3000/track-order" class="button">
+                            <a href="https://xn--sila-dpa.com/track-order" class="button">
                                 🔍 Suivre maintenant
                             </a>
                         </div>

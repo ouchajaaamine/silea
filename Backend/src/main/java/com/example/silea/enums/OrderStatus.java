@@ -11,6 +11,7 @@ public enum OrderStatus {
     PICKED_UP,            // ramassé
     IN_WAREHOUSE,         // entrepôt
     IN_TRANSIT,           // en transit
+    SHIPPED,              // expédié
     OUT_FOR_DELIVERY,     // distribué, en cours de livraison
     DELIVERED,            // livré
     PARTIALLY_DELIVERED,  // livré partiellement
@@ -44,7 +45,7 @@ public enum OrderStatus {
     public boolean isActive() {
         return this == PENDING || this == CONFIRMED || this == PROCESSING || 
                this == PICKUP_REQUESTED || this == PICKED_UP || this == IN_WAREHOUSE ||
-               this == IN_TRANSIT || this == OUT_FOR_DELIVERY || this == SCHEDULED;
+               this == IN_TRANSIT || this == SHIPPED || this == OUT_FOR_DELIVERY || this == SCHEDULED;
     }
     
     /**
@@ -52,7 +53,7 @@ public enum OrderStatus {
      */
     public boolean isSenditStatus() {
         return this == PICKUP_REQUESTED || this == PICKED_UP || this == IN_WAREHOUSE ||
-               this == IN_TRANSIT || this == OUT_FOR_DELIVERY || this == DELIVERED ||
+               this == IN_TRANSIT || this == SHIPPED || this == OUT_FOR_DELIVERY || this == DELIVERED ||
                this == PARTIALLY_DELIVERED || this == UNREACHABLE || this == POSTPONED ||
                this == SCHEDULED || this == REFUSED;
     }

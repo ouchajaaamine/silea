@@ -175,6 +175,8 @@ public class MondayService {
                 return "En entrepôt";
             case IN_TRANSIT:
                 return "En transit";
+            case SHIPPED:
+                return "Expédié";
             case OUT_FOR_DELIVERY:
                 return "En cours de livraison";
             case DELIVERED:
