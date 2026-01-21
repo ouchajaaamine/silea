@@ -309,6 +309,53 @@ jobs:
           chmod 600 ~/.ssh/ec2-key.pem
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
+      - name: 📝 Create .env file
+        run: |
+          cat > .env << 'EOF'
+          # Database Configuration
+          SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/silea_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+          SPRING_DATASOURCE_USERNAME=root
+          SPRING_DATASOURCE_PASSWORD=SileaDB2026!Secure
+          
+          # Email Configuration
+          EMAIL_ENABLED=true
+          EMAIL_HOST=smtp.gmail.com
+          EMAIL_PORT=587
+          EMAIL_USERNAME=${{ secrets.EMAIL_USERNAME }}
+          EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_FROM=official@xn--sila-dpa.com
+          EMAIL_FROM_NAME=Silea
+          
+          # Monday.com Configuration
+          MONDAY_ENABLED=${{ secrets.MONDAY_ENABLED || 'true' }}
+          MONDAY_API_TOKEN=${{ secrets.MONDAY_API_TOKEN }}
+          MONDAY_BOARD_ID=${{ secrets.MONDAY_BOARD_ID }}
+          
+          # Sendit Configuration
+          SENDIT_ENABLED=true
+          SENDIT_API_URL=https://api.sendit.ma/v1
+          SENDIT_PUBLIC_KEY=${{ secrets.SENDIT_PUBLIC_KEY || '' }}
+          SENDIT_PRIVATE_KEY=${{ secrets.SENDIT_PRIVATE_KEY || '' }}
+          SENDIT_SYNC_INTERVAL=5
+          
+          # Spring Profile
+          SPRING_PROFILES_ACTIVE=prod
+          
+          # MySQL Configuration
+          MYSQL_ROOT_PASSWORD=SileaDB2026!Secure
+          MYSQL_DATABASE=silea_db
+          
+          # phpMyAdmin
+          PMA_HOST=mysql
+          PMA_USER=root
+          PMA_PASSWORD=SileaDB2026!Secure
+          EOF
+
+      - name: 📤 Upload files to EC2
+        run: |
+          scp -i ~/.ssh/ec2-key.pem -o StrictHostKeyChecking=no docker-compose.prod.yml ec2-user@${{ secrets.EC2_HOST }}:/opt/silea/
+          scp -i ~/.ssh/ec2-key.pem -o StrictHostKeyChecking=no .env ec2-user@${{ secrets.EC2_HOST }}:/opt/silea/
+
       - name: 🚀 Deploy on EC2
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -322,10 +369,7 @@ jobs:
             echo "📂 Navigating to application directory..."
             cd /opt/silea
             
-            echo "📥 Pulling latest code..."
-            git pull origin main
-            
-            echo "📥 Pulling latest images..."
+            echo "📥 Pulling latest Docker images..."
             docker-compose -f docker-compose.prod.yml pull
             
             echo "🚀 Deploying with docker-compose..."
