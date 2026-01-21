@@ -319,72 +319,17 @@ jobs:
             echo "🔐 Logging into ECR..."
             aws ecr get-login-password --region eu-west-3 | docker login --username AWS --password-stdin 442147575154.dkr.ecr.eu-west-3.amazonaws.com
             
-            echo "📝 Creating docker-compose configuration..."
-            cd ~/silea
-            cat > docker-compose.yml <<'EOF'
-          services:
-            mysql:
-              image: mysql:8.0
-              container_name: silea-mysql
-              environment:
-                MYSQL_ROOT_PASSWORD: SileaDB2026!Secure
-                MYSQL_DATABASE: silea_db
-              volumes:
-                - mysql_data:/var/lib/mysql
-              ports:
-                - "3306:3306"
-              restart: always
-              healthcheck:
-                test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-                interval: 10s
-                timeout: 5s
-                retries: 5
-
-            backend:
-              image: 442147575154.dkr.ecr.eu-west-3.amazonaws.com/silea-backend:latest
-              container_name: silea-backend
-              environment:
-                SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/silea_db
-                SPRING_DATASOURCE_USERNAME: root
-                SPRING_DATASOURCE_PASSWORD: SileaDB2026!Secure
-              ports:
-                - "8080:8080"
-              depends_on:
-                mysql:
-                  condition: service_healthy
-              restart: always
-
-            frontend:
-              image: 442147575154.dkr.ecr.eu-west-3.amazonaws.com/silea-frontend:latest
-              container_name: silea-frontend
-              environment:
-                NEXT_PUBLIC_API_URL: https://xn--sila-dpa.com
-              ports:
-                - "3000:3000"
-              depends_on:
-                - backend
-              restart: always
-
-            phpmyadmin:
-              image: phpmyadmin:latest
-              container_name: silea-phpmyadmin
-              environment:
-                PMA_HOST: mysql
-                PMA_USER: root
-                PMA_PASSWORD: SileaDB2026!Secure
-              ports:
-                - "8081:80"
-              depends_on:
-                - mysql
-              restart: always
-
-          volumes:
-            mysql_data:
-          EOF
+            echo "📂 Navigating to application directory..."
+            cd /opt/silea
             
-            echo "📥 Pulling images and deploying..."
-            docker-compose pull
-            docker-compose up -d --remove-orphans
+            echo "📥 Pulling latest code..."
+            git pull origin main
+            
+            echo "📥 Pulling latest images..."
+            docker-compose -f docker-compose.prod.yml pull
+            
+            echo "🚀 Deploying with docker-compose..."
+            docker-compose -f docker-compose.prod.yml up -d --remove-orphans
             
             echo "⏳ Waiting for services to be healthy..."
             sleep 45
@@ -394,7 +339,7 @@ jobs:
             
             echo ""
             echo "✅ Deployment Complete!"
-            docker-compose ps
+            docker-compose -f docker-compose.prod.yml ps
           ENDSSH
 
       - name: ✅ Deployment Summary
