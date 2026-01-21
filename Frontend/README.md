@@ -59,11 +59,9 @@ public/zaytoun-drone.mp4
 
 ## 🔐 Admin Access
 
-Demo credentials:
-- Email: `admin@silea.com`
-- Password: `admin123`
-
 Access admin at: `/admin`
+
+Use your configured admin credentials to log in.
 
 ## 🛠️ Tech Stack
 

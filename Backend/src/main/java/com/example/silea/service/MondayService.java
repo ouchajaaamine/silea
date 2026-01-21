@@ -204,7 +204,7 @@ public class MondayService {
     private String executeGraphQLRequest(String query) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", mondayConfig.getApiToken());
+        headers.set("Authorization", "Bearer " + mondayConfig.getApiToken());
         headers.set("API-Version", "2023-10");
 
         Map<String, String> body = new HashMap<>();

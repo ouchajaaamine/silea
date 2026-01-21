@@ -148,11 +148,6 @@ export default function AdminLoginPage() {
               </Button>
             </form>
 
-            <div className="mt-6 pt-6 border-t border-[#556B2F]/10">
-              <p className="text-center text-sm text-muted-foreground">
-                Demo credentials: admin@silea.com / admin123
-              </p>
-            </div>
           </CardContent>
         </Card>
 
