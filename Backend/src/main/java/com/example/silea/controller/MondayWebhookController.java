@@ -33,13 +33,13 @@ public class MondayWebhookController {
 
     private final OrderRepository orderRepository;
     private final ObjectMapper objectMapper;
-    private final com.example.silea.service.WhatsAppService whatsAppService;
+    private final com.example.silea.service.EmailService emailService;
 
     public MondayWebhookController(OrderRepository orderRepository, ObjectMapper objectMapper,
-                                  com.example.silea.service.WhatsAppService whatsAppService) {
+                                  com.example.silea.service.EmailService emailService) {
         this.orderRepository = orderRepository;
         this.objectMapper = objectMapper;
-        this.whatsAppService = whatsAppService;
+        this.emailService = emailService;
     }
 
     /**
@@ -174,18 +174,18 @@ public class MondayWebhookController {
                 logger.info("Successfully updated order {} status from {} to {} based on Monday.com webhook",
                     order.getOrderNumber(), oldStatus, newStatus);
                 
-                // Send WhatsApp notification ONLY if status actually changed
+                // Send email notification ONLY if status actually changed
                 if (oldStatus != newStatus) {
                     try {
-                        logger.info("Sending WhatsApp notification for status change: {} -> {}", 
+                        logger.info("Sending email notification for status change: {} -> {}", 
                             oldStatus, newStatus);
-                        whatsAppService.sendStatusUpdate(order, newStatus);
+                        emailService.sendStatusUpdate(order, newStatus);
                     } catch (Exception e) {
-                        logger.error("Failed to send WhatsApp notification for order {}: {}", 
+                        logger.error("Failed to send email notification for order {}: {}", 
                             order.getOrderNumber(), e.getMessage());
                     }
                 } else {
-                    logger.debug("Skipping WhatsApp notification - status unchanged: {}", newStatus);
+                    logger.debug("Skipping email notification - status unchanged: {}", newStatus);
                 }
             } else {
                 logger.warn("Could not find order with number: {}", itemName);
@@ -280,8 +280,11 @@ public class MondayWebhookController {
                 return OrderStatus.PROCESSING;
             case "shipped":
             case "expédié":
+            case "en transit":
+                return OrderStatus.IN_TRANSIT;
             case "out for delivery":
-                return OrderStatus.SHIPPED;
+            case "en cours de livraison":
+                return OrderStatus.OUT_FOR_DELIVERY;
             case "delivered":
             case "livré":
             case "completed":

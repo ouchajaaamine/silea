@@ -22,6 +22,7 @@ import {
   CalendarDays,
   TrendingUp,
   DollarSign,
+  Link2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -56,6 +57,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { ordersApi, type Order, type OrderStatistics, type OrderStatus } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import { AdminSidebar } from "@/components/admin-sidebar"
@@ -94,6 +103,10 @@ export default function AdminOrdersPage() {
   const [customEndDate, setCustomEndDate] = useState("")
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [stats, setStats] = useState<OrderStatistics | null>(null)
+  const [senditDialogOpen, setSenditDialogOpen] = useState(false)
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null)
+  const [senditTrackingCode, setSenditTrackingCode] = useState("")
+  const [linkingSendit, setLinkingSendit] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem("silea_token")
@@ -623,6 +636,9 @@ export default function AdminOrdersPage() {
                             {order.trackingCode && (
                               <p className="text-xs text-[#556B2F]/40 font-mono">{order.trackingCode}</p>
                             )}
+                            {order.senditTrackingCode && (
+                              <p className="text-xs text-emerald-600 font-mono">Sendit: {order.senditTrackingCode}</p>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -665,10 +681,19 @@ export default function AdminOrdersPage() {
                                 </DropdownMenuItem>
                               )}
                               {order.status === "PROCESSING" && (
-                                <DropdownMenuItem onClick={() => handleStatusChange(order.id, "SHIPPED")}>
-                                  <Truck className="w-4 h-4 mr-2 text-purple-600" />
-                                  Mark Shipped
-                                </DropdownMenuItem>
+                                <>
+                                  <DropdownMenuItem onClick={() => {
+                                    setSelectedOrderId(order.id)
+                                    setSenditDialogOpen(true)
+                                  }}>
+                                    <Link2 className="w-4 h-4 mr-2 text-blue-600" />
+                                    Link Sendit Code
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleStatusChange(order.id, "SHIPPED")}>
+                                    <Truck className="w-4 h-4 mr-2 text-purple-600" />
+                                    Mark Shipped
+                                  </DropdownMenuItem>
+                                </>
                               )}
                               {order.status === "SHIPPED" && (
                                 <DropdownMenuItem onClick={() => handleStatusChange(order.id, "OUT_FOR_DELIVERY")}>
@@ -705,6 +730,95 @@ export default function AdminOrdersPage() {
             </CardContent>
           </Card>
         </main>
+
+        {/* Sendit Tracking Code Dialog */}
+        <Dialog open={senditDialogOpen} onOpenChange={setSenditDialogOpen}>
+          <DialogContent className="bg-white border-[#556B2F]/10">
+            <DialogHeader>
+              <DialogTitle className="text-[#556B2F]">Link Sendit Tracking Code</DialogTitle>
+              <DialogDescription className="text-[#556B2F]/60">
+                Enter the Sendit.ma tracking code you received after registering this order in their system.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="sendit-code" className="text-[#556B2F]">
+                  Sendit Tracking Code
+                </Label>
+                <Input
+                  id="sendit-code"
+                  placeholder="e.g., SND12345"
+                  value={senditTrackingCode}
+                  onChange={(e) => setSenditTrackingCode(e.target.value)}
+                  className="border-[#556B2F]/20 focus:border-[#556B2F]"
+                />
+                <p className="text-xs text-[#556B2F]/60">
+                  This will link the order with Sendit delivery tracking and enable automatic status updates.
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSenditDialogOpen(false)
+                  setSenditTrackingCode("")
+                  setSelectedOrderId(null)
+                }}
+                className="border-[#556B2F]/20 text-[#556B2F]"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!senditTrackingCode.trim()) {
+                    toast.error("Please enter a tracking code")
+                    return
+                  }
+                  if (!selectedOrderId) return
+
+                  setLinkingSendit(true)
+                  try {
+                    const token = localStorage.getItem("silea_token")
+                    const response = await fetch(
+                      `http://localhost:8080/api/orders/${selectedOrderId}/sendit-tracking`,
+                      {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({
+                          senditTrackingCode: senditTrackingCode.trim(),
+                        }),
+                      }
+                    )
+
+                    if (response.ok) {
+                      toast.success("Sendit tracking code linked successfully!")
+                      setSenditDialogOpen(false)
+                      setSenditTrackingCode("")
+                      setSelectedOrderId(null)
+                      fetchOrders() // Refresh orders
+                    } else {
+                      const error = await response.json()
+                      toast.error(error.message || "Failed to link tracking code")
+                    }
+                  } catch (error) {
+                    console.error("Error linking Sendit code:", error)
+                    toast.error("Failed to link tracking code")
+                  } finally {
+                    setLinkingSendit(false)
+                  }
+                }}
+                disabled={linkingSendit || !senditTrackingCode.trim()}
+                className="bg-[#556B2F] hover:bg-[#556B2F]/90 text-white"
+              >
+                {linkingSendit ? "Linking..." : "Link Code"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )

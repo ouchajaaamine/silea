@@ -1,0 +1,91 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate  # NEVER use update in production!
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.MySQLDialect
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+    defer-datasource-initialization: false
+  
+  sql:
+    init:
+      mode: never  # Don't run data.sql in production
+  
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+# Logging configuration for production
+logging:
+  level:
+    root: INFO
+    com.example.silea: INFO
+    org.springframework.web: WARN
+    org.hibernate: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: /var/log/silea/application.log
+    max-size: 10MB
+    max-history: 30
+
+# Monday.com Integration Configuration
+monday:
+  enabled: ${MONDAY_ENABLED:true}
+  api-token: ${MONDAY_API_TOKEN}
+  board-id: ${MONDAY_BOARD_ID}
+  api-url: https://api.monday.com/v2
+
+# Email Configuration
+email:
+  enabled: ${EMAIL_ENABLED:true}
+  host: ${EMAIL_HOST:smtp.gmail.com}
+  port: ${EMAIL_PORT:587}
+  username: ${EMAIL_USERNAME}
+  password: ${EMAIL_PASSWORD}
+  from-address: ${EMAIL_FROM}
+  from-name: ${EMAIL_FROM_NAME:Silea}
+  smtp-auth: true
+  smtp-starttls-enable: true
+  smtp-starttls-required: true
+
+# Sendit.ma Integration Configuration
+sendit:
+  enabled: ${SENDIT_ENABLED:true}
+  api-url: ${SENDIT_API_URL:https://api.sendit.ma/v1}
+  public-key: ${SENDIT_PUBLIC_KEY}
+  private-key: ${SENDIT_PRIVATE_KEY}
+  sync-interval-minutes: ${SENDIT_SYNC_INTERVAL:5}
+
+# Security settings
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized

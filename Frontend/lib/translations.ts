@@ -457,12 +457,28 @@ export interface Translations {
       confirmedDesc: string
       processing: string
       processingDesc: string
-      shipped: string
-      shippedDesc: string
+      pickupRequested: string
+      pickupRequestedDesc: string
+      pickedUp: string
+      pickedUpDesc: string
+      inWarehouse: string
+      inWarehouseDesc: string
+      inTransit: string
+      inTransitDesc: string
       outForDelivery: string
       outForDeliveryDesc: string
       delivered: string
       deliveredDesc: string
+      partiallyDelivered: string
+      partiallyDeliveredDesc: string
+      unreachable: string
+      unreachableDesc: string
+      postponed: string
+      postponedDesc: string
+      scheduled: string
+      scheduledDesc: string
+      refused: string
+      refusedDesc: string
       cancelled: string
       cancelledDesc: string
       refunded: string
@@ -905,7 +921,7 @@ export const translations: Record<Language, Translations> = {
       orderNumber: 'Order Number',
       trackingCode: 'Tracking Code',
       searchPlaceholder: 'e.g., CMD001',
-      searchPlaceholderTracking: 'e.g., SL-251205-XXXX',
+      searchPlaceholderTracking: 'e.g., SL-251205-XXXX or SND12345',
       trackButton: 'Track Order',
       searching: 'Searching...',
       tryAgain: 'Try Again',
@@ -925,12 +941,28 @@ export const translations: Record<Language, Translations> = {
         confirmedDesc: 'Your order has been confirmed and is being prepared',
         processing: 'Processing',
         processingDesc: 'Your order is being carefully packed',
-        shipped: 'Shipped',
-        shippedDesc: 'Your order is on its way to you',
+        pickupRequested: 'Pickup Requested',
+        pickupRequestedDesc: 'We have requested the carrier to pick up your package',
+        pickedUp: 'Picked Up',
+        pickedUpDesc: 'Your package has been picked up by the carrier',
+        inWarehouse: 'In Warehouse',
+        inWarehouseDesc: 'Your order is at the carrier warehouse',
+        inTransit: 'In Transit',
+        inTransitDesc: 'Your order is on its way to you',
         outForDelivery: 'Out for Delivery',
         outForDeliveryDesc: 'Your order is out for delivery today',
         delivered: 'Delivered',
         deliveredDesc: 'Your order has been delivered successfully',
+        partiallyDelivered: 'Partially Delivered',
+        partiallyDeliveredDesc: 'Part of your order has been delivered',
+        unreachable: 'Unreachable',
+        unreachableDesc: 'We were unable to reach you. Please contact us',
+        postponed: 'Postponed',
+        postponedDesc: 'Delivery has been postponed as per your request',
+        scheduled: 'Scheduled',
+        scheduledDesc: 'Delivery has been scheduled at the agreed time',
+        refused: 'Refused',
+        refusedDesc: 'This order was refused. Contact us for details',
         cancelled: 'Cancelled',
         cancelledDesc: 'This order has been cancelled',
         refunded: 'Refunded',
@@ -949,7 +981,7 @@ export const translations: Record<Language, Translations> = {
       needHelpDesc: 'Our customer service team is here to assist you',
       contactUs: 'Contact Us',
       orderTip: 'Order Number',
-      orderTipDesc: 'Find your order number in the confirmation email we sent you (e.g., CMD001)',
+      orderTipDesc: 'Use the tracking code we sent you via WhatsApp (e.g., CMD001 or SL-251205-XXXX)',
       trackingTip: 'Tracking Code',
       trackingTipDesc: 'Use your unique tracking code to get real-time delivery updates (e.g., SL-251205-XXXX)',
     },
@@ -1371,7 +1403,7 @@ export const translations: Record<Language, Translations> = {
       orderNumber: 'Numéro de commande',
       trackingCode: 'Code de suivi',
       searchPlaceholder: 'ex. : CMD001',
-      searchPlaceholderTracking: 'ex. : SL-251205-XXXX',
+      searchPlaceholderTracking: 'ex. : SL-251205-XXXX ou SND12345',
       trackButton: 'Suivre la commande',
       searching: 'Recherche...',
       tryAgain: 'Réessayer',
@@ -1390,13 +1422,29 @@ export const translations: Record<Language, Translations> = {
         confirmed: 'Confirmée',
         confirmedDesc: 'Votre commande a été confirmée et est en préparation',
         processing: 'En traitement',
-        processingDesc: 'Votre commande est soigneusement emballée',
-        shipped: 'Expédiée',
-        shippedDesc: 'Votre commande est en route vers vous',
+        processingDesc: 'Votre commande est emballée avec soin',
+        pickupRequested: 'Ramassage demandé',
+        pickupRequestedDesc: 'Nous avons demandé au livreur de récupérer votre colis',
+        pickedUp: 'Ramassé',
+        pickedUpDesc: 'Votre colis a été récupéré par le livreur',
+        inWarehouse: 'En entrepôt',
+        inWarehouseDesc: 'Votre commande est dans l\'entrepôt du livreur',
+        inTransit: 'En transit',
+        inTransitDesc: 'Votre colis est en route vers vous',
         outForDelivery: 'En cours de livraison',
         outForDeliveryDesc: 'Votre commande est en cours de livraison aujourd\'hui',
         delivered: 'Livrée',
         deliveredDesc: 'Votre commande a été livrée avec succès',
+        partiallyDelivered: 'Partiellement livrée',
+        partiallyDeliveredDesc: 'Une partie de votre commande a été livrée',
+        unreachable: 'Injoignable',
+        unreachableDesc: 'Impossible de vous joindre. Veuillez nous contacter',
+        postponed: 'Reporté',
+        postponedDesc: 'Livraison reportée selon votre demande',
+        scheduled: 'Programmé',
+        scheduledDesc: 'Livraison programmée à l\'heure convenue',
+        refused: 'Refusée',
+        refusedDesc: 'Commande refusée. Contactez-nous pour les détails',
         cancelled: 'Annulée',
         cancelledDesc: 'Cette commande a été annulée',
         refunded: 'Remboursée',
@@ -1415,7 +1463,7 @@ export const translations: Record<Language, Translations> = {
       needHelpDesc: 'Notre équipe du service client est là pour vous aider',
       contactUs: 'Nous contacter',
       orderTip: 'Numéro de commande',
-      orderTipDesc: 'Trouvez votre numéro de commande dans l\'e-mail de confirmation que nous vous avons envoyé (ex. : CMD001)',
+      orderTipDesc: 'Utilisez le code de suivi que nous vous avons envoyé via WhatsApp (ex. : CMD001 ou SL-251205-XXXX)',
       trackingTip: 'Code de suivi',
       trackingTipDesc: 'Utilisez votre code de suivi unique pour obtenir des mises à jour de livraison en temps réel (ex. : SL-251205-XXXX)',
     },
@@ -1837,7 +1885,7 @@ export const translations: Record<Language, Translations> = {
       orderNumber: 'رقم الطلب',
       trackingCode: 'رمز التتبع',
       searchPlaceholder: 'مثال: CMD001',
-      searchPlaceholderTracking: 'مثال: SL-251205-XXXX',
+      searchPlaceholderTracking: 'مثال: SL-251205-XXXX أو SND12345',
       trackButton: 'تتبع الطلب',
       searching: 'جاري البحث...',
       tryAgain: 'حاول مرة أخرى',
@@ -1856,17 +1904,33 @@ export const translations: Record<Language, Translations> = {
         confirmed: 'تم التأكيد',
         confirmedDesc: 'تم تأكيد طلبك وهو قيد الإعداد',
         processing: 'قيد المعالجة',
-        processingDesc: 'يتم تغليف طلبك بعناية',
-        shipped: 'تم الشحن',
-        shippedDesc: 'طلبك في طريقه إليك',
-        outForDelivery: 'خارج للتوصيل',
-        outForDeliveryDesc: 'طلبك خارج للتوصيل اليوم',
-        delivered: 'تم التسليم',
-        deliveredDesc: 'تم تسليم طلبك بنجاح',
+        processingDesc: 'يتم تحضير طلبك بعناية',
+        pickupRequested: 'طلب الرفع',
+        pickupRequestedDesc: 'طلبنا من شركة التوصيل رفع الطرد',
+        pickedUp: 'تم الرفع',
+        pickedUpDesc: 'تم رفع الطرد من قبل شركة التوصيل',
+        inWarehouse: 'في المستودع',
+        inWarehouseDesc: 'طلبك في مستودع شركة التوصيل',
+        inTransit: 'في الطريق',
+        inTransitDesc: 'طلبك في الطريق إليك',
+        outForDelivery: 'قيد التوصيل',
+        outForDeliveryDesc: 'طلبك قيد التوصيل اليوم',
+        delivered: 'تم التوصيل',
+        deliveredDesc: 'تم توصيل طلبك بنجاح',
+        partiallyDelivered: 'توصيل جزئي',
+        partiallyDeliveredDesc: 'تم تسليم جزء من طلبك',
+        unreachable: 'غير متاح',
+        unreachableDesc: 'لم نتمكن من الوصول إليك. يرجى التواصل معنا',
+        postponed: 'مؤجل',
+        postponedDesc: 'تم تأجيل التوصيل حسب طلبك',
+        scheduled: 'مجدول',
+        scheduledDesc: 'تم جدولة التوصيل في الوقت المتفق عليه',
+        refused: 'مرفوض',
+        refusedDesc: 'تم رفض الطلب. تواصل معنا للتفاصيل',
         cancelled: 'ملغى',
         cancelledDesc: 'تم إلغاء هذا الطلب',
-        refunded: 'مسترد',
-        refundedDesc: 'تم استرداد هذا الطلب',
+        refunded: 'مرتجع',
+        refundedDesc: 'تم ارتجاع هذا الطلب',
       },
       orderDate: 'تاريخ الطلب',
       estDelivery: 'التوصيل المتوقع',
@@ -1881,10 +1945,9 @@ export const translations: Record<Language, Translations> = {
       needHelpDesc: 'فريق خدمة العملاء لدينا هنا لمساعدتك',
       contactUs: 'اتصل بنا',
       orderTip: 'رقم الطلب',
-      orderTipDesc: 'ابحث عن رقم طلبك في البريد الإلكتروني للتأكيد الذي أرسلناه لك (مثال: CMD001)',
+      orderTipDesc: 'استخدم رمز التتبع الذي أرسلناه لك عبر واتساب (مثال: CMD001 أو SL-251205-XXXX)',
       trackingTip: 'رمز التتبع',
       trackingTipDesc: 'استخدم رمز التتبع الفريد الخاص بك للحصول على تحديثات التوصيل في الوقت الفعلي (مثال: SL-251205-XXXX)',
     },
   },
-}
-
+};

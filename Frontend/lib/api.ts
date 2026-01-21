@@ -223,7 +223,7 @@ export interface OrderItem {
 }
 
 // Order Status Types
-export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPED' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
+export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'PROCESSING' | 'PICKUP_REQUESTED' | 'PICKED_UP' | 'IN_WAREHOUSE' | 'IN_TRANSIT' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'PARTIALLY_DELIVERED' | 'UNREACHABLE' | 'POSTPONED' | 'SCHEDULED' | 'REFUSED' | 'CANCELLED' | 'REFUNDED';
 
 export interface OrderStatusInfo {
   code: OrderStatus;
@@ -236,6 +236,7 @@ export interface Order {
   id: number;
   orderNumber: string;
   trackingCode?: string;
+  senditTrackingCode?: string;
   customer: {
     id: number;
     name: string;
@@ -259,6 +260,7 @@ export interface OrderDetailResponse {
   id: number;
   orderNumber: string;
   trackingCode?: string;
+  senditTrackingCode?: string;
   status: OrderStatus;
   orderDate: string;
   estimatedDeliveryDate: string;

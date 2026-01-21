@@ -167,12 +167,32 @@ public class MondayService {
                 return "Confirmé";
             case PROCESSING:
                 return "En traitement";
-            case SHIPPED:
-                return "Expédié";
+            case PICKUP_REQUESTED:
+                return "Ramassage demandé";
+            case PICKED_UP:
+                return "Ramassé";
+            case IN_WAREHOUSE:
+                return "En entrepôt";
+            case IN_TRANSIT:
+                return "En transit";
+            case OUT_FOR_DELIVERY:
+                return "En cours de livraison";
             case DELIVERED:
                 return "Livré";
+            case PARTIALLY_DELIVERED:
+                return "Partiellement livré";
+            case UNREACHABLE:
+                return "Injoignable";
+            case POSTPONED:
+                return "Reporté";
+            case SCHEDULED:
+                return "Programmé";
+            case REFUSED:
+                return "Refusé";
             case CANCELLED:
                 return "Annulé";
+            case REFUNDED:
+                return "Remboursé";
             default:
                 return "En attente";
         }

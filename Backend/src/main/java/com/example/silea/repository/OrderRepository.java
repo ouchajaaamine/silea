@@ -111,4 +111,15 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     // Get revenue by status
     @Query("SELECT o.status, SUM(o.total) FROM Order o GROUP BY o.status")
     List<Object[]> getRevenueByStatus();
+    
+    // Find order by Sendit tracking code
+    Optional<Order> findBySenditTrackingCode(String senditTrackingCode);
+    
+    // Find orders with Sendit tracking that are not in final status
+    @Query("SELECT o FROM Order o WHERE o.senditTrackingCode IS NOT NULL AND o.status NOT IN ('DELIVERED', 'PARTIALLY_DELIVERED', 'CANCELLED', 'REFUSED', 'REFUNDED')")
+    List<Order> findOrdersWithSenditTrackingNotFinal();
+    
+    // Find orders that haven't been synced with Sendit recently
+    @Query("SELECT o FROM Order o WHERE o.senditTrackingCode IS NOT NULL AND (o.lastSenditSync IS NULL OR o.lastSenditSync < :threshold)")
+    List<Order> findOrdersNeedingSenditSync(@Param("threshold") LocalDateTime threshold);
 }

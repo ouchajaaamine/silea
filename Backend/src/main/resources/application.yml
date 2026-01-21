@@ -11,10 +11,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
-    show-sql: ${SPRING_JPA_SHOW_SQL:true}
+    show-sql: ${SPRING_JPA_SHOW_SQL:false}
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
         dialect: org.hibernate.dialect.MySQLDialect
     defer-datasource-initialization: true
   
@@ -34,14 +34,36 @@ thirdparty:
 
 # Monday.com Integration Configuration
 monday:
-  enabled: true
-  api-token: ${MONDAY_API_TOKEN:eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU5NjM5ODQxMCwiYWFpIjoxMSwidWlkIjo5NjgxOTM3OCwiaWFkIjoiMjAyNS0xMi0xMVQwMDozNjo0MS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6MzI2OTI2OTYsInJnbiI6ImV1YzEifQ.wvMLmqf5cFi7-IFmvLlLb0LNQgfCV-jaN5P5U_dpzog}
-  board-id: ${MONDAY_BOARD_ID:5088829162}
+  enabled: ${MONDAY_ENABLED:true}
+  api-token: ${MONDAY_API_TOKEN}
+  board-id: ${MONDAY_BOARD_ID}
   api-url: https://api.monday.com/v2
 
-# WhatsApp Integration Configuration
+# WhatsApp Integration Configuration (DEPRECATED - using Email now)
 whatsapp:
   enabled: false
-  account-sid: ${WHATSAPP_ACCOUNT_SID:your-twilio-account-sid}
-  auth-token: ${WHATSAPP_AUTH_TOKEN:your-twilio-auth-token}
-  from-number: ${WHATSAPP_FROM_NUMBER:whatsapp:+14155238886}
+  account-sid: ${WHATSAPP_ACCOUNT_SID:}
+  auth-token: ${WHATSAPP_AUTH_TOKEN:}
+  messaging-service-sid: ${WHATSAPP_MESSAGING_SERVICE_SID:}
+  from-number: ${WHATSAPP_FROM_NUMBER:}
+
+# Email Configuration (Replaces WhatsApp)
+email:
+  enabled: ${EMAIL_ENABLED:true}
+  host: ${EMAIL_HOST:smtp.gmail.com}
+  port: ${EMAIL_PORT:587}
+  username: ${EMAIL_USERNAME}
+  password: ${EMAIL_PASSWORD}
+  from-address: ${EMAIL_FROM}
+  from-name: ${EMAIL_FROM_NAME:Silea}
+  smtp-auth: true
+  smtp-starttls-enable: true
+  smtp-starttls-required: true
+
+# Sendit.ma Integration Configuration
+sendit:
+  enabled: ${SENDIT_ENABLED:true}
+  api-url: ${SENDIT_API_URL:https://api.sendit.ma/v1}
+  public-key: ${SENDIT_PUBLIC_KEY}
+  private-key: ${SENDIT_PRIVATE_KEY}
+  sync-interval-minutes: ${SENDIT_SYNC_INTERVAL:5}

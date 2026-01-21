@@ -52,6 +52,15 @@ public class Order {
     @Column(name = "tracking_code", unique = true)
     private String trackingCode;
     
+    @Column(name = "sendit_tracking_code", unique = true)
+    private String senditTrackingCode;  // Tracking code from Sendit.ma API
+    
+    @Column(name = "sendit_delivery_id")
+    private String senditDeliveryId;  // Delivery ID from Sendit.ma
+    
+    @Column(name = "last_sendit_sync")
+    private LocalDateTime lastSenditSync;  // Last time we synced with Sendit API
+    
     @Column(name = "estimated_delivery_date")
     private LocalDateTime estimatedDeliveryDate;
     
@@ -172,6 +181,30 @@ public class Order {
     
     public void setTrackingCode(String trackingCode) {
         this.trackingCode = trackingCode;
+    }
+    
+    public String getSenditTrackingCode() {
+        return senditTrackingCode;
+    }
+    
+    public void setSenditTrackingCode(String senditTrackingCode) {
+        this.senditTrackingCode = senditTrackingCode;
+    }
+    
+    public String getSenditDeliveryId() {
+        return senditDeliveryId;
+    }
+    
+    public void setSenditDeliveryId(String senditDeliveryId) {
+        this.senditDeliveryId = senditDeliveryId;
+    }
+    
+    public LocalDateTime getLastSenditSync() {
+        return lastSenditSync;
+    }
+    
+    public void setLastSenditSync(LocalDateTime lastSenditSync) {
+        this.lastSenditSync = lastSenditSync;
     }
     
     public LocalDateTime getEstimatedDeliveryDate() {

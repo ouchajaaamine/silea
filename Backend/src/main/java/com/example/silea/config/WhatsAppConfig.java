@@ -11,6 +11,7 @@ public class WhatsAppConfig {
     private String accountSid;
     private String authToken;
     private String fromNumber;
+    private String messagingServiceSid;
     private String businessName;
 
     public boolean isEnabled() {
@@ -43,6 +44,14 @@ public class WhatsAppConfig {
 
     public void setFromNumber(String fromNumber) {
         this.fromNumber = fromNumber;
+    }
+
+    public String getMessagingServiceSid() {
+        return messagingServiceSid;
+    }
+
+    public void setMessagingServiceSid(String messagingServiceSid) {
+        this.messagingServiceSid = messagingServiceSid;
     }
 
     public String getBusinessName() {

@@ -112,6 +112,12 @@
 			<version>10.6.4</version>
 		</dependency>
 
+		<!-- Spring Boot Starter Mail for Email -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
+
 	</dependencies>
 
 	<build>

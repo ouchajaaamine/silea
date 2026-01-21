@@ -101,7 +101,7 @@ public class OrderTrackingService {
             case PENDING: return 1;
             case CONFIRMED: return 2;
             case PROCESSING: return 3;
-            case SHIPPED: return 4;
+            case IN_TRANSIT: return 4;
             case OUT_FOR_DELIVERY: return 5;
             case DELIVERED: return 6;
             case CANCELLED: return 0;
@@ -205,9 +205,8 @@ public class OrderTrackingService {
             case PROCESSING:
             case PACKED:
                 return OrderStatus.PROCESSING;
-            case SHIPPED:
             case IN_TRANSIT:
-                return OrderStatus.SHIPPED;
+                return OrderStatus.IN_TRANSIT;
             case OUT_FOR_DELIVERY:
             case DELIVERY_ATTEMPTED:
                 return OrderStatus.OUT_FOR_DELIVERY;

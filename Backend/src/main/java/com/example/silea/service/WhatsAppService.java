@@ -77,6 +77,10 @@ public class WhatsAppService {
         try {
             String customerPhone = formatPhoneNumber(order.getCustomer().getPhone());
             String trackingCode = order.getTrackingCode() != null ? order.getTrackingCode() : "N/A";
+            
+            logger.info("Attempting to send WhatsApp status update: Order={}, Status={}, Customer={}, Phone={}",
+                order.getOrderNumber(), newStatus, order.getCustomer().getName(), customerPhone);
+            
             String message = messageTemplates.getStatusUpdateMessage(
                 order.getCustomer().getName(),
                 order.getOrderNumber(),
@@ -85,11 +89,11 @@ public class WhatsAppService {
             );
             
             sendMessage(customerPhone, message);
-            logger.info("Status update sent via WhatsApp for order: {} - Status: {}", 
+            logger.info("✓ Status update sent via WhatsApp for order: {} - Status: {}", 
                 order.getOrderNumber(), newStatus);
         } catch (Exception e) {
-            logger.error("Failed to send status update via WhatsApp for order {}: {}", 
-                order.getOrderNumber(), e.getMessage());
+            logger.error("✗ Failed to send status update via WhatsApp for order {}: {}", 
+                order.getOrderNumber(), e.getMessage(), e);
         }
     }
     
@@ -143,6 +147,66 @@ public class WhatsAppService {
     }
     
     /**
+     * Send delivery status update notification (for Sendit tracking updates)
+     */
+    public void sendDeliveryStatusUpdate(Order order, OrderStatus oldStatus, OrderStatus newStatus) {
+        if (!whatsAppConfig.isEnabled()) {
+            logger.debug("WhatsApp is disabled, skipping delivery status update");
+            return;
+        }
+        
+        try {
+            String customerPhone = formatPhoneNumber(order.getCustomer().getPhone());
+            String senditTrackingCode = order.getSenditTrackingCode() != null ? order.getSenditTrackingCode() : "N/A";
+            
+            String message = messageTemplates.getDeliveryStatusUpdateMessage(
+                order.getCustomer().getName(),
+                order.getOrderNumber(),
+                oldStatus,
+                newStatus,
+                senditTrackingCode
+            );
+            
+            sendMessage(customerPhone, message);
+            logger.info("Delivery status update sent via WhatsApp for order: {} - {} -> {}", 
+                order.getOrderNumber(), oldStatus, newStatus);
+        } catch (Exception e) {
+            logger.error("Failed to send delivery status update via WhatsApp for order {}: {}", 
+                order.getOrderNumber(), e.getMessage());
+        }
+    }
+    
+    /**
+     * Send notification when Sendit tracking code is linked to order
+     */
+    public void sendSenditTrackingLinked(Order order) {
+        if (!whatsAppConfig.isEnabled()) {
+            logger.debug("WhatsApp is disabled, skipping Sendit tracking notification");
+            return;
+        }
+        
+        try {
+            String customerPhone = formatPhoneNumber(order.getCustomer().getPhone());
+            String sileaTrackingCode = order.getTrackingCode() != null ? order.getTrackingCode() : "N/A";
+            String senditTrackingCode = order.getSenditTrackingCode() != null ? order.getSenditTrackingCode() : "N/A";
+            
+            String message = messageTemplates.getSenditTrackingLinkedMessage(
+                order.getCustomer().getName(),
+                order.getOrderNumber(),
+                sileaTrackingCode,
+                senditTrackingCode
+            );
+            
+            sendMessage(customerPhone, message);
+            logger.info("Sendit tracking linked notification sent via WhatsApp for order: {}", 
+                order.getOrderNumber());
+        } catch (Exception e) {
+            logger.error("Failed to send Sendit tracking linked notification via WhatsApp for order {}: {}", 
+                order.getOrderNumber(), e.getMessage());
+        }
+    }
+    
+    /**
      * Send cancellation notification
      */
     public void sendCancellationNotification(Order order, String reason) {
@@ -172,15 +236,34 @@ public class WhatsAppService {
      */
     private void sendMessage(String toPhoneNumber, String messageBody) {
         try {
-            Message message = Message.creator(
-                new PhoneNumber(toPhoneNumber),
-                new PhoneNumber(whatsAppConfig.getFromNumber()),
-                messageBody
-            ).create();
+            logger.info("Sending WhatsApp message: To={}", toPhoneNumber);
             
-            logger.debug("WhatsApp message sent successfully. SID: {}", message.getSid());
+            Message message;
+            
+            // Use Messaging Service SID if available (recommended for production)
+            if (whatsAppConfig.getMessagingServiceSid() != null && 
+                !whatsAppConfig.getMessagingServiceSid().isEmpty()) {
+                logger.info("Using Messaging Service SID: {}", whatsAppConfig.getMessagingServiceSid());
+                message = Message.creator(
+                    new PhoneNumber(toPhoneNumber),
+                    whatsAppConfig.getMessagingServiceSid(),
+                    messageBody
+                ).create();
+            } else {
+                // Fallback to from-number
+                logger.info("Using From Number: {}", whatsAppConfig.getFromNumber());
+                message = Message.creator(
+                    new PhoneNumber(toPhoneNumber),
+                    new PhoneNumber(whatsAppConfig.getFromNumber()),
+                    messageBody
+                ).create();
+            }
+            
+            logger.info("✓ WhatsApp message sent successfully. SID: {}, Status: {}", 
+                message.getSid(), message.getStatus());
         } catch (Exception e) {
-            logger.error("Failed to send WhatsApp message to {}: {}", toPhoneNumber, e.getMessage());
+            logger.error("✗ Failed to send WhatsApp message to {}: {} - {}", 
+                toPhoneNumber, e.getClass().getSimpleName(), e.getMessage(), e);
             throw e;
         }
     }

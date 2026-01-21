@@ -477,6 +477,7 @@ public class OrderController {
         response.put("id", order.getId());
         response.put("orderNumber", order.getOrderNumber());
         response.put("trackingCode", order.getTrackingCode());
+        response.put("senditTrackingCode", order.getSenditTrackingCode());
         response.put("status", order.getStatus().name());
         response.put("orderDate", order.getOrderDate());
         response.put("estimatedDeliveryDate", order.getEstimatedDeliveryDate());
@@ -1006,5 +1007,59 @@ public class OrderController {
 
         public String getNotes() { return notes; }
         public void setNotes(String notes) { this.notes = notes; }
+    }
+    
+    /**
+     * Link Sendit tracking code to an order (Admin endpoint)
+     */
+    @PostMapping("/{orderId}/sendit-tracking")
+    @Operation(
+        summary = "Link Sendit tracking code", 
+        description = "Admin endpoint to manually link a Sendit.ma tracking code to an order after registering it in Sendit system"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Tracking code linked successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid tracking code or order"),
+        @ApiResponse(responseCode = "404", description = "Order not found")
+    })
+    public ResponseEntity<?> linkSenditTrackingCode(
+            @PathVariable Long orderId,
+            @RequestBody SenditTrackingRequest request) {
+        try {
+            Order updatedOrder = orderService.linkSenditTrackingCode(orderId, request.getSenditTrackingCode());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Sendit tracking code linked successfully");
+            response.put("order", Map.of(
+                "orderNumber", updatedOrder.getOrderNumber(),
+                "senditTrackingCode", updatedOrder.getSenditTrackingCode(),
+                "status", updatedOrder.getStatus(),
+                "lastSenditSync", updatedOrder.getLastSenditSync()
+            ));
+            
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "Failed to link Sendit tracking code: " + e.getMessage()
+            ));
+        }
+    }
+    
+    public static class SenditTrackingRequest {
+        private String senditTrackingCode;
+
+        public SenditTrackingRequest() {}
+
+        public String getSenditTrackingCode() { return senditTrackingCode; }
+        public void setSenditTrackingCode(String senditTrackingCode) { 
+            this.senditTrackingCode = senditTrackingCode; 
+        }
     }
 }

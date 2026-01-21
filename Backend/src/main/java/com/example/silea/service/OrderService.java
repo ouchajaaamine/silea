@@ -28,17 +28,20 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final CustomerRepository customerRepository;
     private final MondayService mondayService;
-    private final WhatsAppService whatsAppService;
+    private final EmailService emailService;
+    private final SenditService senditService;
     
     // For generating unique tracking codes
     private static final SecureRandom secureRandom = new SecureRandom();
 
     public OrderService(OrderRepository orderRepository, CustomerRepository customerRepository,
-                       MondayService mondayService, WhatsAppService whatsAppService) {
+                       MondayService mondayService, EmailService emailService,
+                       SenditService senditService) {
         this.orderRepository = orderRepository;
         this.customerRepository = customerRepository;
         this.mondayService = mondayService;
-        this.whatsAppService = whatsAppService;
+        this.emailService = emailService;
+        this.senditService = senditService;
     }
 
     /**
@@ -92,14 +95,17 @@ public class OrderService {
                 savedOrder.getOrderNumber(), e.getMessage(), e);
         }
         
-        // Send WhatsApp confirmation (async, won't fail order if WhatsApp is down)
+        // Send email confirmation (async, won't fail order if email is down)
         try {
-            logger.info("Sending WhatsApp confirmation for order: {}", savedOrder.getOrderNumber());
-            whatsAppService.sendOrderConfirmation(savedOrder);
+            logger.info("Sending email confirmation for order: {}", savedOrder.getOrderNumber());
+            emailService.sendOrderConfirmation(savedOrder);
         } catch (Exception e) {
-            logger.error("Failed to send WhatsApp confirmation for order {}: {}", 
+            logger.error("Failed to send email confirmation for order {}: {}", 
                 savedOrder.getOrderNumber(), e.getMessage());
         }
+        
+        // NOTE: Sendit delivery is NOT created automatically
+        // Admin must manually register order in Sendit.ma and then link the tracking code via admin panel
         
         return savedOrder;
     }
@@ -130,6 +136,13 @@ public class OrderService {
         
         // Handle status-specific actions
         handleStatusChange(savedOrder, previousStatus, status);
+        
+        // Send email status update notification
+        try {
+            emailService.sendStatusUpdate(savedOrder, status);
+        } catch (Exception e) {
+            logger.error("Failed to send email notification for order status update: {}", e.getMessage());
+        }
         
         return savedOrder;
     }
@@ -241,6 +254,66 @@ public class OrderService {
     public List<Order> getOverdueOrders() {
         return orderRepository.findOverdueOrders(LocalDateTime.now());
     }
+    
+    /**
+     * Link Sendit tracking code to an order (MANUAL PROCESS)
+     * Called by admin after manually registering order in Sendit.ma
+     * 
+     * @param orderId The order ID to link
+     * @param senditTrackingCode The tracking code from Sendit.ma
+     * @return Updated order with Sendit tracking code
+     */
+    public Order linkSenditTrackingCode(Long orderId, String senditTrackingCode) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found with ID: " + orderId));
+        
+        // Validate tracking code is not empty
+        if (senditTrackingCode == null || senditTrackingCode.trim().isEmpty()) {
+            throw new IllegalArgumentException("Sendit tracking code cannot be empty");
+        }
+        
+        // Check if this tracking code is already used by another order
+        Optional<Order> existingOrderOpt = orderRepository.findBySenditTrackingCode(senditTrackingCode.trim());
+        if (existingOrderOpt.isPresent() && !existingOrderOpt.get().getId().equals(orderId)) {
+            throw new IllegalArgumentException("This Sendit tracking code is already linked to order: " + 
+                existingOrderOpt.get().getOrderNumber());
+        }
+        
+        // Link the Sendit tracking code
+        order.setSenditTrackingCode(senditTrackingCode.trim());
+        order.setLastSenditSync(LocalDateTime.now());
+        
+        Order savedOrder = orderRepository.save(order);
+        logger.info("Linked Sendit tracking code {} to order {}", senditTrackingCode, order.getOrderNumber());
+        
+        // Optionally fetch initial status from Sendit
+        try {
+            var senditDelivery = senditService.getDeliveryByTrackingCode(senditTrackingCode.trim());
+            if (senditDelivery != null) {
+                OrderStatus senditStatus = senditService.mapSenditStatusToOrderStatus(senditDelivery.getStatus());
+                if (senditStatus != null) {
+                    savedOrder.setStatus(senditStatus);
+                    savedOrder.setSenditDeliveryId(senditDelivery.getId());
+                    savedOrder = orderRepository.save(savedOrder);
+                    logger.info("Updated order {} with initial Sendit status: {}", 
+                        order.getOrderNumber(), senditStatus);
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("Could not fetch initial Sendit status for order {}: {}", 
+                order.getOrderNumber(), e.getMessage());
+            // Don't fail the linking process if we can't fetch status
+        }
+        
+        // Send email notification with Sendit tracking code
+        try {
+            emailService.sendSenditTrackingLinked(savedOrder);
+        } catch (Exception e) {
+            logger.error("Failed to send email notification for Sendit tracking link: {}", e.getMessage());
+        }
+        
+        return savedOrder;
+    }
 
     /**
      * Search orders
@@ -278,7 +351,7 @@ public class OrderService {
         long pendingOrders = orderRepository.countByStatus(OrderStatus.PENDING);
         long confirmedOrders = orderRepository.countByStatus(OrderStatus.CONFIRMED);
         long processingOrders = orderRepository.countByStatus(OrderStatus.PROCESSING);
-        long shippedOrders = orderRepository.countByStatus(OrderStatus.SHIPPED);
+        long inTransitOrders = orderRepository.countByStatus(OrderStatus.IN_TRANSIT);
         long outForDeliveryOrders = orderRepository.countByStatus(OrderStatus.OUT_FOR_DELIVERY);
         long deliveredOrders = orderRepository.countByStatus(OrderStatus.DELIVERED);
         long cancelledOrders = orderRepository.countByStatus(OrderStatus.CANCELLED);
@@ -296,7 +369,7 @@ public class OrderService {
         long todaysOrders = orderRepository.findByOrderDateBetween(todayStart, now).size();
 
         return new OrderStatistics(totalOrders, pendingOrders, confirmedOrders, processingOrders,
-                                 shippedOrders, outForDeliveryOrders, deliveredOrders, 
+                                 inTransitOrders, outForDeliveryOrders, deliveredOrders, 
                                  cancelledOrders, refundedOrders, monthlyRevenue, todaysOrders);
     }
 
@@ -324,6 +397,13 @@ public class OrderService {
         
         // Update customer stats
         handleStatusChange(savedOrder, previousStatus, OrderStatus.CANCELLED);
+        
+        // Send email cancellation notification
+        try {
+            emailService.sendCancellationNotification(savedOrder, cancellationReason);
+        } catch (Exception e) {
+            logger.error("Failed to send email cancellation notification: {}", e.getMessage());
+        }
         
         return savedOrder;
     }
@@ -370,7 +450,15 @@ public class OrderService {
      * Find order by tracking code
      */
     public Optional<Order> findByTrackingCodePublic(String trackingCode) {
-        return orderRepository.findByTrackingCode(trackingCode);
+        // Try to find by Silea tracking code first
+        Optional<Order> order = orderRepository.findByTrackingCode(trackingCode);
+        
+        // If not found, try to find by Sendit tracking code
+        if (order.isEmpty()) {
+            order = orderRepository.findBySenditTrackingCode(trackingCode);
+        }
+        
+        return order;
     }
     
     /**
@@ -393,7 +481,16 @@ public class OrderService {
         }
         
         order.setStatus(OrderStatus.CONFIRMED);
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+        
+        // Send email status update notification
+        try {
+            emailService.sendStatusUpdate(savedOrder, OrderStatus.CONFIRMED);
+        } catch (Exception e) {
+            logger.error("Failed to send email notification for order confirmation: {}", e.getMessage());
+        }
+        
+        return savedOrder;
     }
     
     /**
@@ -403,7 +500,7 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found"));
         
-        if (order.getStatus().isFinal() || order.getStatus() == OrderStatus.SHIPPED || 
+        if (order.getStatus().isFinal() || order.getStatus() == OrderStatus.IN_TRANSIT || 
             order.getStatus() == OrderStatus.OUT_FOR_DELIVERY) {
             throw new IllegalArgumentException("Cannot update address for orders that have been shipped or completed");
         }
@@ -436,7 +533,7 @@ public class OrderService {
         private final long pendingOrders;
         private final long confirmedOrders;
         private final long processingOrders;
-        private final long shippedOrders;
+        private final long inTransitOrders;
         private final long outForDeliveryOrders;
         private final long deliveredOrders;
         private final long cancelledOrders;
@@ -445,14 +542,14 @@ public class OrderService {
         private final long todaysOrders;
 
         public OrderStatistics(long totalOrders, long pendingOrders, long confirmedOrders,
-                             long processingOrders, long shippedOrders, long outForDeliveryOrders,
+                             long processingOrders, long inTransitOrders, long outForDeliveryOrders,
                              long deliveredOrders, long cancelledOrders, long refundedOrders,
                              BigDecimal monthlyRevenue, long todaysOrders) {
             this.totalOrders = totalOrders;
             this.pendingOrders = pendingOrders;
             this.confirmedOrders = confirmedOrders;
             this.processingOrders = processingOrders;
-            this.shippedOrders = shippedOrders;
+            this.inTransitOrders = inTransitOrders;
             this.outForDeliveryOrders = outForDeliveryOrders;
             this.deliveredOrders = deliveredOrders;
             this.cancelledOrders = cancelledOrders;
@@ -466,7 +563,7 @@ public class OrderService {
         public long getPendingOrders() { return pendingOrders; }
         public long getConfirmedOrders() { return confirmedOrders; }
         public long getProcessingOrders() { return processingOrders; }
-        public long getShippedOrders() { return shippedOrders; }
+        public long getInTransitOrders() { return inTransitOrders; }
         public long getOutForDeliveryOrders() { return outForDeliveryOrders; }
         public long getDeliveredOrders() { return deliveredOrders; }
         public long getCancelledOrders() { return cancelledOrders; }
@@ -476,7 +573,7 @@ public class OrderService {
         
         // Calculated getters
         public long getActiveOrders() { 
-            return pendingOrders + confirmedOrders + processingOrders + shippedOrders + outForDeliveryOrders; 
+            return pendingOrders + confirmedOrders + processingOrders + inTransitOrders + outForDeliveryOrders; 
         }
         public double getCompletionRate() {
             if (totalOrders == 0) return 0;

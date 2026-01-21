@@ -59,12 +59,33 @@ function TrackOrderContent() {
       icon: Package,
       description: t.trackOrder.status.processingDesc
     },
-    SHIPPED: { 
-      label: t.trackOrder.status.shipped,
+    PICKUP_REQUESTED: { 
+      label: t.trackOrder.status.pickupRequested,
+      color: "text-cyan-600", 
+      bgColor: "bg-cyan-500", 
+      icon: PackageCheck,
+      description: t.trackOrder.status.pickupRequestedDesc
+    },
+    PICKED_UP: { 
+      label: t.trackOrder.status.pickedUp,
+      color: "text-teal-600", 
+      bgColor: "bg-teal-500", 
+      icon: Package,
+      description: t.trackOrder.status.pickedUpDesc
+    },
+    IN_WAREHOUSE: { 
+      label: t.trackOrder.status.inWarehouse,
+      color: "text-slate-600", 
+      bgColor: "bg-slate-500", 
+      icon: ShoppingBag,
+      description: t.trackOrder.status.inWarehouseDesc
+    },
+    IN_TRANSIT: { 
+      label: t.trackOrder.status.inTransit,
       color: "text-purple-600", 
       bgColor: "bg-purple-500", 
       icon: Truck,
-      description: t.trackOrder.status.shippedDesc
+      description: t.trackOrder.status.inTransitDesc
     },
     OUT_FOR_DELIVERY: { 
       label: t.trackOrder.status.outForDelivery,
@@ -79,6 +100,41 @@ function TrackOrderContent() {
       bgColor: "bg-emerald-500", 
       icon: CheckCircle2,
       description: t.trackOrder.status.deliveredDesc
+    },
+    PARTIALLY_DELIVERED: { 
+      label: t.trackOrder.status.partiallyDelivered,
+      color: "text-lime-600", 
+      bgColor: "bg-lime-500", 
+      icon: Package,
+      description: t.trackOrder.status.partiallyDeliveredDesc
+    },
+    UNREACHABLE: { 
+      label: t.trackOrder.status.unreachable,
+      color: "text-yellow-600", 
+      bgColor: "bg-yellow-500", 
+      icon: AlertCircle,
+      description: t.trackOrder.status.unreachableDesc
+    },
+    POSTPONED: { 
+      label: t.trackOrder.status.postponed,
+      color: "text-amber-600", 
+      bgColor: "bg-amber-500", 
+      icon: Calendar,
+      description: t.trackOrder.status.postponedDesc
+    },
+    SCHEDULED: { 
+      label: t.trackOrder.status.scheduled,
+      color: "text-sky-600", 
+      bgColor: "bg-sky-500", 
+      icon: Calendar,
+      description: t.trackOrder.status.scheduledDesc
+    },
+    REFUSED: { 
+      label: t.trackOrder.status.refused,
+      color: "text-rose-600", 
+      bgColor: "bg-rose-500", 
+      icon: Ban,
+      description: t.trackOrder.status.refusedDesc
     },
     CANCELLED: { 
       label: t.trackOrder.status.cancelled,
@@ -367,12 +423,23 @@ function TrackOrderContent() {
                       <CardTitle className="font-serif text-2xl text-stone-800">{order.orderNumber}</CardTitle>
                       {order.trackingCode && (
                         <p className="text-sm text-stone-500 font-mono mt-1 flex items-center gap-2">
-                          {t.trackOrder.trackingCode}: {order.trackingCode}
+                          <span className="font-semibold">Silea {t.trackOrder.trackingCode}:</span> {order.trackingCode}
                           <button 
                             onClick={() => copyToClipboard(order.trackingCode!)}
                             className="p-1 hover:bg-stone-100 rounded transition-colors"
                           >
                             <Copy className="w-3 h-3 text-stone-400" />
+                          </button>
+                        </p>
+                      )}
+                      {order.senditTrackingCode && order.status !== 'PENDING' && order.status !== 'CONFIRMED' && (
+                        <p className="text-sm text-emerald-600 font-mono mt-1 flex items-center gap-2">
+                          <span className="font-semibold">Sendit Delivery Code:</span> {order.senditTrackingCode}
+                          <button 
+                            onClick={() => copyToClipboard(order.senditTrackingCode!)}
+                            className="p-1 hover:bg-emerald-50 rounded transition-colors"
+                          >
+                            <Copy className="w-3 h-3 text-emerald-500" />
                           </button>
                         </p>
                       )}
